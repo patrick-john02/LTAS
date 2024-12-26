@@ -1,0 +1,8 @@
+[06-Oct-2024 04:36:02 UTC] PHP Fatal error:  Uncaught Error: Interface 'PHPMailer\PHPMailer\OAuthTokenProvider' not found in /home/hisgqmlh/cmls-inventory.site/Partials/PHPMailer/src/OAuth.php:36
+Stack trace:
+#0 {main}
+  thrown in /home/hisgqmlh/cmls-inventory.site/Partials/PHPMailer/src/OAuth.php on line 36
+[06-Oct-2024 12:29:34 UTC] PHP Fatal error:  Uncaught Error: Interface 'PHPMailer\PHPMailer\OAuthTokenProvider' not found in /home/hisgqmlh/cmls-inventory.site/Partials/PHPMailer/src/OAuth.php:36
+Stack trace:
+#0 {main}
+  thrown in /home/hisgqmlh/cmls-inventory.site/Partials/PHPMailer/src/OAuth.php on line 36

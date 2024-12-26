@@ -1,0 +1,80 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ligislative Document</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <center><div class="sidebar-header">LTAS</div></center>
+            <nav>
+                <ul>
+                    <li><a href="#">Dashboard</a></li>
+                  <center><li class="header">LEGISLATIVE MANAGEMENT</li></center>  
+                    <li><a href="session.html">Sesions</a></li>
+                    <li><a href="index.html">Documents Management</a></li>
+                    <li><a href="#">Memorandum</a></li>
+                    <li><a href="#">Resolution</a></li>
+                    <li><a href="#">Executive Order</a></li>
+                </ul>
+            </nav>
+        </aside>
+        <main>
+            <header>
+                <div class="user-name">Profile</div>
+            </header>
+            <section class="Documents-management">
+                <div class="add-document">
+                    <h2>Add Document</h2>
+                    <form>
+                        <label for="document id">Document ID</label>
+                         <input type="text" id="id" name="id" value="AUTO_GENERATED_ID" readonly>
+                        <label for="title">Title</label>
+                        <input type="text" id="title" name="title">
+                        <label for="description">Description</label>
+                        <input type="text" id="description" name="description">
+                        <label for="Author">Author</label>
+                        <input type="text" id="Author" name="Author">
+                         <label for="date-stamp">Date Published</label>
+                        <input type="datetime-local" id="date-stamp" name="date-stamp">
+
+                        <label for="Documents-type">Category</label>
+                        <select id="Documents-type" name="Documents-type">
+                            <option value="Ordinances">Memorandum</option>
+                            <option value="Resolution">Resolution</option>
+                            <option value="Executive Order">Executive Order</option>
+                            
+                        </select>
+                        <button type="submit">Submit</button>
+                    </form>
+                </div>
+                <div class="document-list">
+                    <div class="document-item">
+                   <center> <h3>DOCUMENTS</center></h3>
+                    </div>
+
+                    <div class="document-item">
+                        <h3>Memorandum</h3>
+                        <button class="view-items"> </button>
+                        <button class="remove-exam">View</button>
+                    </div>
+                    <div class="document-item">
+                        <h3>Resolution</h3>
+                        <button class="view-items"></button>
+                        <button class="remove-exam">View </button>
+                    </div>
+                    <div class="document-item">
+                        <h3>Executive Order</h3>
+                        <button class="view-items"> </button>
+                        <button class="remove-exam">View </button>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
+
