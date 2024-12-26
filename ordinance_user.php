@@ -19,15 +19,47 @@ $sql = "SELECT * FROM documents WHERE user_id = ? AND Category = 'Ordinance' AND
 $params = [$uid];
 $types = "i";
 
-// Date range filtering
+// this is the date filtering sheesh
+$dateFilter = isset($_GET['date_filter']) ? $_GET['date_filter'] : '';
+$currentDate = new DateTime();
+
+switch ($dateFilter) {
+    case 'today':
+        $startDate = $currentDate->format('Y-m-d 00:00:00');
+        $endDate = $currentDate->format('Y-m-d 23:59:59');
+        break;
+    case 'this_week':
+        $weekStart = new DateTime('monday this week');
+        $weekEnd = new DateTime('sunday this week');
+        $startDate = $weekStart->format('Y-m-d 00:00:00');
+        $endDate = $weekEnd->format('Y-m-d 23:59:59');
+        break;
+    case 'this_month':
+        $monthStart = new DateTime('first day of this month');
+        $monthEnd = new DateTime('last day of this month');
+        $startDate = $monthStart->format('Y-m-d 00:00:00');
+        $endDate = $monthEnd->format('Y-m-d 23:59:59');
+        break;
+    case 'this_year':
+        $yearStart = new DateTime('first day of January this year');
+        $yearEnd = new DateTime('last day of December this year');
+        $startDate = $yearStart->format('Y-m-d 00:00:00');
+        $endDate = $yearEnd->format('Y-m-d 23:59:59');
+        break;
+    default:
+        $startDate = '';
+        $endDate = '';
+}
+
+
 if (!empty($startDate) && !empty($endDate)) {
-    $sql .= " AND `Date Published` BETWEEN ? AND ?";
+    $sql .= " AND `approval_timestamp` BETWEEN ? AND ?";
     $params[] = $startDate;
     $params[] = $endDate;
     $types .= "ss";
 }
 
-$sql .= " ORDER BY `Date Published` DESC";
+$sql .= " ORDER BY `approval_timestamp` DESC";
 
 $stmt = $conn->prepare($sql);
 if ($stmt) {
@@ -158,19 +190,16 @@ if ($stmt) {
             <label for="date-filter">Filter by Date:</label>
             <select name="date_filter" id="date-filter" class="form-control" style="width: 400px; display: inline-block;">
                 <option value="">All Time</option>
-                <option value="today" <?php if (isset($_GET['date_filter']) && $_GET['date_filter'] === 'today') echo 'selected'; ?>>Today</option>
-                <option value="this_week" <?php if (isset($_GET['date_filter']) && $_GET['date_filter'] === 'this_week') echo 'selected'; ?>>Weekly</option>
-                <option value="this_month" <?php if (isset($_GET['date_filter']) && $_GET['date_filter'] === 'this_month') echo 'selected'; ?>>Monthly</option>
-                <option value="this_year" <?php if (isset($_GET['date_filter']) && $_GET['date_filter'] === 'this_year') echo 'selected'; ?>>Yearly</option>
+                <option value="today" <?php if ($dateFilter === 'today') echo 'selected'; ?>>Today</option>
+                <option value="this_week" <?php if ($dateFilter === 'this_week') echo 'selected'; ?>>This Week</option>
+                <option value="this_month" <?php if ($dateFilter === 'this_month') echo 'selected'; ?>>This Month</option>
+                <option value="this_year" <?php if ($dateFilter === 'this_year') echo 'selected'; ?>>This Year</option>
             </select>
         </div>
         <div class="col-md-2">
             <button type="submit" class="btn btn-primary mt-0">Filter</button>
         </div>
-
-       
-            <button onclick="window.print();" class="btn btn-secondary" id="print-button">Print Report</button>
-
+        <button onclick="window.print();" class="btn btn-secondary" id="print-button">Print Report</button>
     </div>
 </form>
 
@@ -180,7 +209,7 @@ if ($stmt) {
             <th>Ordinance No.</th>
             <th>Title</th>
             <th>Authored By</th>
-            <th>Date Published</th>
+            <th>Approved on</th>
             <th>Status</th>
         </tr>
     </thead>
@@ -188,41 +217,18 @@ if ($stmt) {
         <?php
         if ($result->num_rows > 0) {
             while ($row = $result->fetch_assoc()) {
-                // Map the database status to the human-readable status
-                $status = '';
-                switch ($row["d_status"]) {
-                    case 'Pending':
-                        $status = 'Pending';
-                        break;
-                    case 'First Reading':
-                        $status = 'First Reading';
-                        break;
-                    case 'Second Reading':
-                        $status = 'Second Reading';
-                        break;
-                    case 'In Committee':
-                        $status = 'In Committee';
-                        break;
-                    default:
-                        $status = 'Unknown';
-                        break;
-                }
-
                 echo "<tr data-id='" . htmlspecialchars($row["id"]) . "'>";
-                echo "<td><a href='user_document_info.php?id=" . urlencode($row["id"]) . "'>" . htmlspecialchars($row["resolution_no"]) . "</a></td>";
+                echo "<td><a href='user_document_info.php?id=" . urlencode($row["id"]) . "'>" . htmlspecialchars($row["ordinance_no"]) . "</a></td>";
                 echo "<td class='editable' data-column='Title'>" . htmlspecialchars($row["Title"]) . "</td>";
                 echo "<td class='editable' data-column='Author'>" . htmlspecialchars($row["Author"]) . "</td>";
-                echo "<td>" . date('Y-m-d', strtotime($row["Date Published"])) . "</td>";
-                // Display the human-readable status
-                echo "<td data-column='Status'>" . $status . "</td>";
-                echo "<input type='hidden' name='id' value='" . htmlspecialchars($row['id']) . "'>";
-                echo "</td>";
+                echo "<td>" . date('Y-m-d H:i:s', strtotime($row["approval_timestamp"])) . "</td>";
+                echo "<td data-column='Author'>" . htmlspecialchars($row["d_status"]) . "</td>";
                 echo "</tr>";
             }
         } else {
-            echo "<tr><td colspan='6' class='text-center'>No documents found</td></tr>";
+            echo "<tr><td colspan='5' class='text-center'>No documents found</td></tr>";
         }
-        ?> 
+        ?>
     </tbody>
 </table>
 </div>

@@ -14,24 +14,56 @@ $uid = $_SESSION['userid'];
 $startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '';
 $endDate = isset($_GET['end_date']) ? $_GET['end_date'] : '';
 
-// Base query: Select only "Approved" resolutions
+// query para sa mga apprved reso
 $sql = "SELECT * FROM documents WHERE user_id = ? AND Category = 'Resolution' AND d_status = 'Approved'";
 $params = [$uid];
 $types = "i";
 
-// Date range filtering
+// this is the date filtering sheesh
+$dateFilter = isset($_GET['date_filter']) ? $_GET['date_filter'] : '';
+$currentDate = new DateTime();
+
+switch ($dateFilter) {
+    case 'today':
+        $startDate = $currentDate->format('Y-m-d 00:00:00');
+        $endDate = $currentDate->format('Y-m-d 23:59:59');
+        break;
+    case 'this_week':
+        $weekStart = new DateTime('monday this week');
+        $weekEnd = new DateTime('sunday this week');
+        $startDate = $weekStart->format('Y-m-d 00:00:00');
+        $endDate = $weekEnd->format('Y-m-d 23:59:59');
+        break;
+    case 'this_month':
+        $monthStart = new DateTime('first day of this month');
+        $monthEnd = new DateTime('last day of this month');
+        $startDate = $monthStart->format('Y-m-d 00:00:00');
+        $endDate = $monthEnd->format('Y-m-d 23:59:59');
+        break;
+    case 'this_year':
+        $yearStart = new DateTime('first day of January this year');
+        $yearEnd = new DateTime('last day of December this year');
+        $startDate = $yearStart->format('Y-m-d 00:00:00');
+        $endDate = $yearEnd->format('Y-m-d 23:59:59');
+        break;
+    default:
+        $startDate = '';
+        $endDate = '';
+}
+
+
 if (!empty($startDate) && !empty($endDate)) {
-    $sql .= " AND `Date Published` BETWEEN ? AND ?";
+    $sql .= " AND `approval_timestamp` BETWEEN ? AND ?";
     $params[] = $startDate;
     $params[] = $endDate;
     $types .= "ss";
 }
 
-$sql .= " ORDER BY `Date Published` DESC";
+$sql .= " ORDER BY `approval_timestamp` DESC";
 
 $stmt = $conn->prepare($sql);
 if ($stmt) {
-    // Bind parameters dynamically
+
     $stmt->bind_param($types, ...$params);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -76,10 +108,10 @@ if ($stmt) {
     }
     #filter-form,
     #print-button,
-    .dataTables_filter, /* Search bar */
-    .dataTables_length, /* Entries dropdown */
-    .dataTables_info,   /* Showing entries info */
-    .dataTables_paginate, /* Pagination controls */
+    .dataTables_filter, 
+    .dataTables_length,
+    .dataTables_info,   
+    .dataTables_paginate, 
     .btn,
     input[type="checkbox"] {
         display: none !important;
@@ -113,7 +145,6 @@ if ($stmt) {
                 <div class="row mb-2">
                     <div class="col-sm-6">
                     <h1 class="m-0">Dashboard</h1>
-                        <!-- Success Message will appear here if success=1 -->
                         <?php if (isset($_GET['success']) && $_GET['success'] == 1): ?>
                             <div class="alert alert-success" role="alert">
                                 Resolution successfully added!
@@ -157,29 +188,26 @@ if ($stmt) {
             <label for="date-filter">Filter by Date:</label>
             <select name="date_filter" id="date-filter" class="form-control" style="width: 400px; display: inline-block;">
                 <option value="">All Time</option>
-                <option value="today" <?php if (isset($_GET['date_filter']) && $_GET['date_filter'] === 'today') echo 'selected'; ?>>Today</option>
-                <option value="this_week" <?php if (isset($_GET['date_filter']) && $_GET['date_filter'] === 'this_week') echo 'selected'; ?>>Weekly</option>
-                <option value="this_month" <?php if (isset($_GET['date_filter']) && $_GET['date_filter'] === 'this_month') echo 'selected'; ?>>Monthly</option>
-                <option value="this_year" <?php if (isset($_GET['date_filter']) && $_GET['date_filter'] === 'this_year') echo 'selected'; ?>>Yearly</option>
+                <option value="today" <?php if ($dateFilter === 'today') echo 'selected'; ?>>Today</option>
+                <option value="this_week" <?php if ($dateFilter === 'this_week') echo 'selected'; ?>>This Week</option>
+                <option value="this_month" <?php if ($dateFilter === 'this_month') echo 'selected'; ?>>This Month</option>
+                <option value="this_year" <?php if ($dateFilter === 'this_year') echo 'selected'; ?>>This Year</option>
             </select>
         </div>
         <div class="col-md-2">
             <button type="submit" class="btn btn-primary mt-0">Filter</button>
         </div>
-
-       
-            <button onclick="window.print();" class="btn btn-secondary" id="print-button">Print Report</button>
-
+        <button onclick="window.print();" class="btn btn-secondary" id="print-button">Print Report</button>
     </div>
 </form>
 
-            <table class="table table-bordered table-striped" id="resolutionTable">
+<table class="table table-bordered table-striped" id="resolutionTable">
     <thead>
         <tr>
             <th>Resolution No.</th>
             <th>Title</th>
             <th>Authored By</th>
-            <th>Date Published</th>
+            <th>Approved on</th>
             <th>Status</th>
         </tr>
     </thead>
@@ -191,17 +219,14 @@ if ($stmt) {
                 echo "<td><a href='user_document_info.php?id=" . urlencode($row["id"]) . "'>" . htmlspecialchars($row["resolution_no"]) . "</a></td>";
                 echo "<td class='editable' data-column='Title'>" . htmlspecialchars($row["Title"]) . "</td>";
                 echo "<td class='editable' data-column='Author'>" . htmlspecialchars($row["Author"]) . "</td>";
-                echo "<td>" . date('Y-m-d', strtotime($row["Date Published"])) . "</td>";
-               
+                echo "<td>" . date('Y-m-d H:i:s', strtotime($row["approval_timestamp"])) . "</td>";
                 echo "<td data-column='Author'>" . htmlspecialchars($row["d_status"]) . "</td>";
-                echo "<input type='hidden' name='id' value='" . htmlspecialchars($row['id']) . "'>";
-                echo "</td>";
                 echo "</tr>";
             }
         } else {
-            echo "<tr><td colspan='6' class='text-center'>No documents found</td></tr>";
+            echo "<tr><td colspan='5' class='text-center'>No documents found</td></tr>";
         }
-        ?> 
+        ?>
     </tbody>
 </table>
             </div>
@@ -247,7 +272,7 @@ if ($stmt) {
     </div>
 </div>
 <script>
-    // Automatically set the current date and time in ISO format for the hidden date field
+
     document.addEventListener('DOMContentLoaded', () => {
         const now = new Date().toISOString().slice(0, 16);
         document.getElementById('date_published').value = now;
@@ -255,16 +280,16 @@ if ($stmt) {
 </script>
 <script>
     function printTable() {
-    // Show the print header before printing
+
     document.getElementById('print-header').style.display = 'block';
 
-    // Create a clone of the table to print
+
     var printContent = document.getElementById('example1').outerHTML;
     
-    // Create a new window for printing
+
     var newWindow = window.open('', '', 'height=500,width=800');
     
-    // Add a print header and the cloned table to the new window
+
     newWindow.document.write('<html><head><title>Print Report</title>');
     newWindow.document.write('<style>/* Additional
 
@@ -393,7 +418,6 @@ $(function () {
 </body>
 </html>
 <?php
-// Close the database connection
 $stmt->close();
 $conn->close();
 ?>
