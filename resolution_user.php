@@ -212,6 +212,7 @@ if ($stmt) {
                 <th>Authored By</th>
                 <th>Approved on</th>
                 <th>Status</th>
+                
             </tr>
         </thead>
         <tbody>
