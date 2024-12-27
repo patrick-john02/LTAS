@@ -183,10 +183,10 @@ if ($stmt) {
 <div class="card-body">
 
 <form method="GET" id="filter-form" class="mb-3">
-    <div class="form-row">
-        <div class="col-md-4">
-            <label for="date-filter">Filter by Date:</label>
-            <select name="date_filter" id="date-filter" class="form-control" style="width: 400px; display: inline-block;">
+    <div class="row g-2">
+        <div class="col-11 col-md-5">
+            <label for="date-filter" class="form-label">Filter by Date:</label>
+            <select name="date_filter" id="date-filter" class="form-control">
                 <option value="">All Time</option>
                 <option value="today" <?php if ($dateFilter === 'today') echo 'selected'; ?>>Today</option>
                 <option value="this_week" <?php if ($dateFilter === 'this_week') echo 'selected'; ?>>This Week</option>
@@ -194,42 +194,45 @@ if ($stmt) {
                 <option value="this_year" <?php if ($dateFilter === 'this_year') echo 'selected'; ?>>This Year</option>
             </select>
         </div>
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-primary mt-0">Filter</button>
+        <div class="col-12 col-md-3">
+            <button type="submit" class="btn btn-primary mt-4 w-100">Filter</button>
         </div>
-        <button onclick="window.print();" class="btn btn-secondary" id="print-button">Print Report</button>
+        <div class="col-12 col-md-3">
+            <button onclick="window.print();" class="btn btn-secondary mt-4 w-100" id="print-button">Print Report</button>
+        </div>
     </div>
 </form>
 
-<table class="table table-bordered table-striped" id="resolutionTable">
-    <thead>
-        <tr>
-            <th>Resolution No.</th>
-            <th>Title</th>
-            <th>Authored By</th>
-            <th>Approved on</th>
-            <th>Status</th>
-        </tr>
-    </thead>
-    <tbody>
-        <?php
-        if ($result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                echo "<tr data-id='" . htmlspecialchars($row["id"]) . "'>";
-                echo "<td><a href='user_document_info.php?id=" . urlencode($row["id"]) . "'>" . htmlspecialchars($row["resolution_no"]) . "</a></td>";
-                echo "<td class='editable' data-column='Title'>" . htmlspecialchars($row["Title"]) . "</td>";
-                echo "<td class='editable' data-column='Author'>" . htmlspecialchars($row["Author"]) . "</td>";
-                echo "<td>" . date('Y-m-d H:i:s', strtotime($row["approval_timestamp"])) . "</td>";
-                echo "<td data-column='Author'>" . htmlspecialchars($row["d_status"]) . "</td>";
-                echo "</tr>";
+<div class="table-responsive">
+    <table class="table table-bordered table-striped" id="resolutionTable">
+        <thead>
+            <tr>
+                <th>Resolution No.</th>
+                <th>Title</th>
+                <th>Authored By</th>
+                <th>Approved on</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php
+            if ($result->num_rows > 0) {
+                while ($row = $result->fetch_assoc()) {
+                    echo "<tr data-id='" . htmlspecialchars($row["id"]) . "'>";
+                    echo "<td><a href='user_document_info.php?id=" . urlencode($row["id"]) . "'>" . htmlspecialchars($row["resolution_no"]) . "</a></td>";
+                    echo "<td class='editable' data-column='Title'>" . htmlspecialchars($row["Title"]) . "</td>";
+                    echo "<td class='editable' data-column='Author'>" . htmlspecialchars($row["Author"]) . "</td>";
+                    echo "<td>" . date('F d, Y h:i:s A', strtotime($row["approval_timestamp"])) . "</td>";
+                    echo "<td data-column='Author'>" . htmlspecialchars($row["d_status"]) . "</td>";
+                    echo "</tr>";
+                }
+            } else {
+                echo "<tr><td colspan='5' class='text-center'>No documents found</td></tr>";
             }
-        } else {
-            echo "<tr><td colspan='5' class='text-center'>No documents found</td></tr>";
-        }
-        ?>
-    </tbody>
-</table>
-            </div>
+            ?>
+        </tbody>
+    </table>
+
         </div>
     </div>
     <!-- Modal for Adding New Resolution -->
@@ -270,6 +273,7 @@ if ($stmt) {
             </form>
         </div>
     </div>
+</div>
 </div>
 <script>
 
