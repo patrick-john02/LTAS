@@ -31,7 +31,7 @@ ob_end_flush(); // Flush output
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resolution Lists</title>
+    <title>Rejected Documents</title>
     <script src="assets/jquery-3.7.1.js"></script>
     <script src="assets/dataTables.js"></script>
     <link rel="stylesheet" href="assets/dataTables.dataTables.css">

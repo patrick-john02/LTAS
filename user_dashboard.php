@@ -121,7 +121,7 @@ $stmt_on_process->close();
               <div class="icon">
                 <i class="ion ion-ios-timer"></i>
               </div>
-              <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+              <!-- <a href="./sent_document_user.php" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a> -->
             </div>
           </div>
 
@@ -135,7 +135,7 @@ $stmt_on_process->close();
               <div class="icon">
                 <i class="ion ion-ios-cog"></i>
               </div>
-              <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+              <!-- <a href="./ordinance_sent_document.php" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a> -->
             </div>
           </div>
 
@@ -149,7 +149,7 @@ $stmt_on_process->close();
               <div class="icon">
                 <i class="ion ion-ios-thumbs-up"></i>
               </div>
-              <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+              <!-- <a href="./resolution_user.php" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a> -->
             </div>
           </div>
 
@@ -163,7 +163,7 @@ $stmt_on_process->close();
               <div class="icon">
                 <i class="ion ion-ios-thumbs-down"></i>
               </div>
-              <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+              <!-- <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a> -->
             </div>
           </div>
         </div>

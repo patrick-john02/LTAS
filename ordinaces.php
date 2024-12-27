@@ -101,7 +101,7 @@ ob_end_flush(); // Flush output
             <div class="container-fluid">
                 <div class="row mb-2">
                     <div class="col-sm-6">
-                        <h1 class="m-0">Dashboard</h1>
+                        <h1 class="m-0">Ordinance Lists</h1>
                         <?php if (isset($_SESSION['message'])): ?>
     <div class="alert alert-info">
         <?php echo $_SESSION['message']; unset($_SESSION['message']); ?>
@@ -138,7 +138,7 @@ ob_end_flush(); // Flush output
 
 
 
-<h3 class="card-title">Ordinance List</h3>
+
 </div>
 <div class="card-body">
     <!-- Status Filtering -->

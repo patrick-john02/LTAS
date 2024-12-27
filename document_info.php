@@ -1,5 +1,5 @@
 <?php
-ob_start(); // output buffering
+ob_start(); // output buff
 session_start();
 include('config.php');
 include('./includes/navbar.php');
@@ -7,7 +7,7 @@ include('./includes/sidebar.php');
 
 // parameter
 if (isset($_GET['id']) && !empty($_GET['id'])) {
-    $id = intval($_GET['id']); // Sanitize input
+    $id = intval($_GET['id']); 
 
     // fetch doc details
     $sql = "SELECT doc_no, Title, Description, Author, `Date Published`, Category, file_path, d_status, resolution_no 
@@ -40,7 +40,7 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
     echo "Invalid document ID!";
     exit;
 }
-//status trigger timeline
+
 function logDocumentAction($conn, $document_id, $action, $performed_by, $comment = null) {
     $valid_actions = ['Pending', 'First Reading', 'Second Reading', 'In Committee', 'Approved', 'Reject'];
     if (in_array($action, $valid_actions)) {
@@ -215,8 +215,9 @@ ob_end_flush(); // Flush output
     </select>
     <textarea name="comment" class="form-control mt-2" placeholder="Enter admin comment..."></textarea>
     <div id="validationMessage" class="text-danger mt-1"></div>
-    <button type="submit" id="updateButton" class="btn btn-success mt-2" disabled>Update Status</button>
+    <button type="submit" id="updateButton" class="btn btn-success mt-2" style="display: none;">Update Status</button> <!-- Button hidden by default -->
 </form>
+
 
     </td>
 </tr>
@@ -276,41 +277,53 @@ ob_end_flush(); // Flush output
     </div>
 </div>
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const dStatus = document.getElementById('d_status');
-        const updateButton = document.getElementById('updateButton');
-        const validationMessage = document.getElementById('validationMessage');
+document.addEventListener("DOMContentLoaded", function () {
+    const dStatus = document.getElementById('d_status');
+    const updateButton = document.getElementById('updateButton');
+    const validationMessage = document.getElementById('validationMessage');
+    const currentStatus = dStatus.getAttribute('data-current-status');
 
-        function updateButtonState() {
-            const currentStatus = dStatus.getAttribute('data-current-status');
-            const selectedStatus = dStatus.value;
+    const validTransitions = {
+        'Pending': ['Reject', 'First Reading'],
+        'First Reading': ['Second Reading', 'Reject'],
+        'Second Reading': ['In Committee', 'Reject'],
+        'In Committee': ['Approved', 'Reject'],
+        'Approved': [], 
+        'Reject': [] 
+    };
 
-            // Updated valid transitions based on new rules
-            const validTransitions = {
-                'Pending': ['Reject', 'First Reading'],
-                'First Reading': ['Second Reading', 'Reject'],
-                'Second Reading': ['In Committee', 'Reject'],
-                'In Committee': ['Approved', 'Reject'],
-                'Approved': [], // No transitions are valid
-                'Reject': [] // No transitions are valid
-            };
+    function updateDropdownOptions() {
+        const options = dStatus.querySelectorAll('option');
+        
+        options.forEach(option => {
+            option.disabled = true;
+        });
 
-            // Check if the transition is valid
-            if (validTransitions[currentStatus]?.includes(selectedStatus)) {
-                updateButton.disabled = false;
-                validationMessage.textContent = ""; // Clear validation message
-            } else {
-                updateButton.disabled = true;
-                validationMessage.textContent = "Invalid transition. Please select a valid status.";
+        validTransitions[currentStatus]?.forEach(status => {
+            const option = dStatus.querySelector(`option[value="${status}"]`);
+            if (option) {
+                option.disabled = false;
             }
+        });
+
+        if (validTransitions[currentStatus]?.length > 0) {
+            updateButton.style.display = 'inline-block';  
+            validationMessage.textContent = ""; 
+        } else {
+            updateButton.style.display = 'none';  
+            validationMessage.textContent = "No valid transitions available."; 
         }
+    }
 
-        // Attach event listener to the dropdown
-        dStatus.addEventListener('change', updateButtonState);
 
-        // Initial check
-        updateButtonState();
+    updateDropdownOptions();
+
+
+    dStatus.addEventListener('change', function () {
+        updateDropdownOptions();
     });
+});
+
 </script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -318,10 +331,8 @@ ob_end_flush(); // Flush output
         const updateButton = document.getElementById('updateButton');
         const currentStatus = statusDropdown.getAttribute('data-current-status');
 
-        // Disable button by default
         updateButton.disabled = true;
 
-        // Enable the button when the status changes
         statusDropdown.addEventListener('change', function () {
             updateButton.disabled = (statusDropdown.value === currentStatus);
         });
@@ -337,7 +348,6 @@ ob_end_flush(); // Flush output
         });
     });
 </script>
-
 
 <!-- Data Tables and Assets -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>

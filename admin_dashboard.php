@@ -7,7 +7,6 @@ if (!isset($_SESSION['userid'])) {
 
 date_default_timezone_set('Asia/Manila');
 
-
 include('config.php');
 
 include('./includes/navbar.php');
@@ -97,16 +96,13 @@ if ($stmt = $conn->prepare($query)) {
 } else {
     echo "Error preparing statement for graph data: " . $conn->error;
 }
-
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>LTAS | Admin Dashboard</title>
-
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
   <link rel="stylesheet" href="assets/plugins/fontawesome-free/css/all.min.css">
   <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
@@ -120,22 +116,18 @@ if ($stmt = $conn->prepare($query)) {
   <link href="https://unpkg.com/ionicons@4.5.10-0/dist/css/ionicons.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
 
-
   <link rel="stylesheet" href="assets/plugins/fontawesome-free/css/all.min.css">
   <link rel="stylesheet" href="assets/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
   <link rel="stylesheet" href="assets/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
   <link rel="stylesheet" href="assets/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
-  
   <link rel="stylesheet" href="assets/dist/css/adminlte.min.css">
   <style>
     tr {
   cursor: pointer;
 }
-
 tr:hover {
   background-color: #f5f5f5; /* Optional: Change row color on hover */
 }
-
   </style>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">
@@ -187,7 +179,7 @@ tr:hover {
     <div class="icon">
     <i class="ion ion-ios-person-add"></i>
     </div>
-    <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+    <a href="./users.php" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
 </div>
           </div>
           <div class="col-lg-3 col-6">
@@ -199,7 +191,7 @@ tr:hover {
     <div class="icon">
         <i class="ion ion-ios-thumbs-up"></i>
     </div>
-    <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+    <a href="./approved_documents.php" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
 </div>
           </div>
           <div class="col-lg-3 col-6">
@@ -211,7 +203,7 @@ tr:hover {
     <div class="icon">
         <i class="ion ion-md-thumbs-down"></i>
     </div>
-    <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+    <a href="./rejected_documents.php" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
 </div>
 </div>
 </div>

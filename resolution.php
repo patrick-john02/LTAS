@@ -116,7 +116,7 @@ ob_end_flush(); // Flush output
             <div class="container-fluid">
                 <div class="row mb-2">
                     <div class="col-sm-6">
-                        <h1 class="m-0">Dashboard</h1>
+                        <h1 class="m-0">Resolution Lists</h1>
                         <?php if (isset($_SESSION['message'])): ?>
     <div class="alert alert-info">
         <?php echo $_SESSION['message']; unset($_SESSION['message']); ?>
@@ -151,9 +151,6 @@ ob_end_flush(); // Flush output
 <strong>OFFICE OF THE SANGGUNIANG KABATAAN</strong>
 </div>
 
-
-
-<h3 class="card-title">Resolution List</h3>
 </div>
 <div class="card-body">
      <!-- Status Filtering -->

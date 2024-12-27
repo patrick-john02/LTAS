@@ -17,7 +17,6 @@ session_start();
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = addslashes($_POST['email']);
     
-    // Check if the email exists in the database
     $sql = mysqli_query($conn, "SELECT * FROM users WHERE email='$email' AND u_status = 'active'");
     $count = mysqli_num_rows($sql);
 
@@ -29,20 +28,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $mail = new PHPMailer(true);
 
         try {
-            // Server settings
             $mail->isSMTP();
             $mail->Host = 'smtp.gmail.com'; // SMTP server
             $mail->SMTPAuth = true;
-            $mail->Username = 'jan.jamero32@gmail.com'; // Your email
-            $mail->Password = 'ciml kefs iekx wrnm'; // App password
+            $mail->Username = 'ityourboiaki@gmail.com'; // Default email for sending
+            $mail->Password = 'jfrn azmo ggtu tcwu'; // app password
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port = 587;
 
             // Recipients
-            $mail->setFrom('jan.jamero32@gmail.com', 'Password Reset');
+            $mail->setFrom('ityourboiaki@gmail.com', 'Password Reset');
             $mail->addAddress($email); // Recipient's email
 
-            // Content
+            // Email Content
             $mail->isHTML(true);
             $mail->Subject = 'Password Reset Request';
             $mail->Body = 'Your OTP for password reset is: <strong>' . $otp . '</strong>';

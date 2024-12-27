@@ -31,7 +31,7 @@ ob_end_flush(); // Flush output
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resolution Lists</title>
+    <title>Approved Documents</title>
     <script src="assets/jquery-3.7.1.js"></script>
     <script src="assets/dataTables.js"></script>
     <link rel="stylesheet" href="assets/dataTables.dataTables.css">
@@ -117,7 +117,7 @@ ob_end_flush(); // Flush output
             <div class="container-fluid">
                 <div class="row mb-2">
                     <div class="col-sm-6">
-                        <h1 class="m-0">Dashboard</h1>
+                        
                         <?php if (isset($_SESSION['message'])): ?>
     <div class="alert alert-info">
         <?php echo $_SESSION['message']; unset($_SESSION['message']); ?>
@@ -152,7 +152,7 @@ ob_end_flush(); // Flush output
 
 
 
-<h3 class="card-title">Approved Document</h3>
+<h3 class="card-title">Approved Documents</h3>
 </div>
 <div class="card-body">
 
@@ -203,7 +203,7 @@ ob_end_flush(); // Flush output
 
     // Prepare SQL query to select documents from both "Resolution" and "Ordinance" categories
     $sql = "SELECT doc_no, Title, Author, `Date Published`, Category, d_status, id, file_path, resolution_no, ordinance_no,
-            (SELECT timestamp FROM document_timeline WHERE document_id = documents.id AND action = 'Approve' ORDER BY timestamp DESC LIMIT 1) AS approval_time
+            (SELECT timestamp FROM document_timeline WHERE document_id = documents.id AND action = 'Approved' ORDER BY timestamp DESC LIMIT 1) AS timeline_approval_timestamp,  approval_timestamp
             FROM documents 
             WHERE isArchive = 0 AND Category IN ('Resolution', 'Ordinance') AND d_status = 'Approved'"; // Both "Resolution" and "Ordinance" approved documents
 
@@ -267,7 +267,7 @@ ob_end_flush(); // Flush output
             echo "<td>" . htmlspecialchars($row["Category"]) . "</td>";
             echo "<td>" . htmlspecialchars($row["d_status"]) . "</td>";
             // Display approval timestamp
-            echo "<td>" . ($row['approval_time'] ? date('Y-m-d H:i:s', strtotime($row['approval_time'])) : 'Not Approved Yet') . "</td>";
+            echo "<td>" . ($row['approval_timestamp'] ? date('F d, Y H:i:s A', strtotime($row['approval_timestamp'])) : 'Not Approved Yet') . "</td>";
             echo "</tr>";
         }
     } else {
@@ -275,11 +275,6 @@ ob_end_flush(); // Flush output
     }
     ?>
 </tbody>
-
-
-
-
-
 </table>
 
 

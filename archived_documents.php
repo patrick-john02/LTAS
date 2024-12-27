@@ -55,7 +55,7 @@ ob_end_flush(); // Send output to browser
             <div class="container-fluid">
                 <div class="row mb-2">
                     <div class="col-sm-6">
-                        <h1 class="m-0">Dashboard</h1>
+                        <h1 class="m-0">Archived Document Lists</h1>
                     </div>
                     <div class="col-sm-6">
                         <ol class="breadcrumb float-sm-right">
@@ -69,9 +69,7 @@ ob_end_flush(); // Send output to browser
 
         <div class="container-fluid">
             <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Archived Documents</h3>
-                </div>
+             
                 <div class="card-body">
                     <table id="archivedDocs" class="table table-bordered table-striped">
                         <thead>

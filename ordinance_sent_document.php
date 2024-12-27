@@ -14,8 +14,8 @@ $uid = $_SESSION['userid'];
 $startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '';
 $endDate = isset($_GET['end_date']) ? $_GET['end_date'] : '';
 
-// Base query: Select only "Approved" resolutions
-$sql = "SELECT * FROM documents WHERE user_id = ? AND Category = 'Ordinance' AND d_status = 'Pending'";
+// Base query: Select all resolutions (no filtering by status)
+$sql = "SELECT * FROM documents WHERE user_id = ? AND Category = 'Ordinance'";
 $params = [$uid];
 $types = "i";
 
@@ -27,7 +27,7 @@ if (!empty($startDate) && !empty($endDate)) {
     $types .= "ss";
 }
 
-$sql .= " ORDER BY `Date Published` DESC";
+$sql .= " ORDER BY `Date Published` DESC"; // Sort by date
 
 $stmt = $conn->prepare($sql);
 if ($stmt) {
