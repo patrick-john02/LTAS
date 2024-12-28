@@ -8,12 +8,20 @@ page labeling for UI improvement
 php mailer configuration
 forgot password
 
+dec 28 2024
+admin side 
+mobile responsive tables and buttons
+fixed the archived document issues 
+fixed the bug on checkboxes 
+
+
 issues
 admin side 
-1. date filtering is not working to all pages
-2. mobile respoonsiveness is not working
-
+1. date filtering is not working to all pages (ongoing)
+2. mobile respoonsiveness is not working (done)
 
 status: admin testing
 
 --Ms. kheriz if some bug occur on the system please contact me okay -- 
+
+-pat
