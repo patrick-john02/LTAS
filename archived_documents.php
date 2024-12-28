@@ -6,28 +6,50 @@ include('config.php');
 include('./includes/navbar.php');
 include('./includes/sidebar.php');
 
+if (isset($_POST['restore']) && (isset($_POST['resolution_no']) || isset($_POST['ordinance_no']))) {
+    // Check if resolution_no or ordinance_no is set for restoration
+    $resolution_no = isset($_POST['resolution_no']) ? trim($_POST['resolution_no']) : null;
+    $ordinance_no = isset($_POST['ordinance_no']) ? trim($_POST['ordinance_no']) : null;
 
-if (isset($_POST['restore']) && isset($_POST['resolution_no'])) {
-    $resolution_no = trim($_POST['resolution_no']);
-    
-    if (!empty($resolution_no)) {
-        $stmt = $conn->prepare("UPDATE documents SET isArchive = 0 WHERE resolution_no = ?");
-        $stmt->bind_param('s', $resolution_no);
+    // If resolution_no is provided, restore it
+    if ($resolution_no) {
+        if (!empty($resolution_no)) {
+            $stmt = $conn->prepare("UPDATE documents SET isArchive = 0 WHERE resolution_no = ?");
+            $stmt->bind_param('s', $resolution_no);
 
-        if ($stmt->execute()) {
-            $_SESSION['message'] = "Document restored successfully!";
+            if ($stmt->execute()) {
+                $_SESSION['message'] = "Document with Resolution No. $resolution_no restored successfully!";
+            } else {
+                $_SESSION['message'] = "Failed to restore document with Resolution No. $resolution_no.";
+            }
         } else {
-            $_SESSION['message'] = "Failed to restore document.";
+            $_SESSION['message'] = "Invalid Resolution number.";
         }
-    } else {
-        $_SESSION['message'] = "Invalid resolution number.";
     }
+
+    // If ordinance_no is provided, restore it
+    if ($ordinance_no) {
+        if (!empty($ordinance_no)) {
+            $stmt = $conn->prepare("UPDATE documents SET isArchive = 0 WHERE ordinance_no = ?");
+            $stmt->bind_param('s', $ordinance_no);
+
+            if ($stmt->execute()) {
+                $_SESSION['message'] = "Document with Ordinance No. $ordinance_no restored successfully!";
+            } else {
+                $_SESSION['message'] = "Failed to restore document with Ordinance No. $ordinance_no.";
+            }
+        } else {
+            $_SESSION['message'] = "Invalid Ordinance number.";
+        }
+    }
+
     header("Location: archived_documents.php");
     exit();
 }
 
 ob_end_flush(); // Send output to browser
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -71,56 +93,82 @@ ob_end_flush(); // Send output to browser
             <div class="card">
              
                 <div class="card-body">
-                    <table id="archivedDocs" class="table table-bordered table-striped">
-                        <thead>
-                            <tr>
-                                <th>Resolution No</th>
-                                <th>Title</th>
-                                <th>Author</th>
-                                <th>Date Published</th>
-                                <th>Category</th>
-                                <th>Status</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php
-                            // Fetch archived documents
-                            $sql = "SELECT resolution_no, Title, Author, `Date Published`, Category, d_status 
-                                    FROM documents 
-                                    WHERE isArchive = 1 
-                                    ORDER BY `Date Published` DESC";
+                <div class="table-responsive">
+                <table id="archivedDocs" class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Select</th>
+                            <th>Document No</th>
+                            <th>Title</th>
+                            <th>Author</th>
+                            <th>Date Published</th>
+                            <th>Category</th>
+                            <th>Status</th>
+                            <th>Approval Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        // Fetch archived documents
+                        $sql = "SELECT resolution_no, ordinance_no, Title, Author, `Date Published`, Category, d_status, approval_timestamp 
+                                FROM documents 
+                                WHERE isArchive = 1 
+                                ORDER BY `Date Published` DESC";
 
-                            $result = mysqli_query($conn, $sql);
+                        $result = mysqli_query($conn, $sql);
 
-                            if ($result && mysqli_num_rows($result) > 0) {
-                                while ($row = mysqli_fetch_assoc($result)) {
-                                    echo "<tr>";
-                                    echo "<td>" . htmlspecialchars($row["resolution_no"]) . "</td>";
-                                    echo "<td>" . htmlspecialchars($row["Title"]) . "</td>";
-                                    echo "<td>" . htmlspecialchars($row["Author"]) . "</td>";
-                                    echo "<td>" . date('Y-m-d', strtotime($row["Date Published"])) . "</td>";
-                                    echo "<td>" . htmlspecialchars($row["Category"]) . "</td>";
-                                    echo "<td>" . htmlspecialchars($row["d_status"]) . "</td>";
-                                    echo "<td>
-    <form action='archived_documents.php' method='POST'>
-        <input type='hidden' name='resolution_no' value='" . htmlspecialchars($row['resolution_no']) . "'>
-        <button type='submit' name='restore' class='btn btn-success btn-sm'>Restore</button>
-    </form>
-</td>";
-
-                                    echo "</tr>";
+                        if ($result && mysqli_num_rows($result) > 0) {
+                            while ($row = mysqli_fetch_assoc($result)) {
+                                echo "<tr>";
+                                echo "<td><input type='checkbox' name='selected_documents[]' value='" . $row['resolution_no'] . "' class='doc-checkbox'></td>";
+                                
+                                // Combine resolution_no and ordinance_no based on the category
+                                $docNumber = '';
+                                if ($row["Category"] == 'Resolution' && !empty($row["resolution_no"])) {
+                                    $docNumber = htmlspecialchars($row["resolution_no"]);
+                                } elseif ($row["Category"] == 'Ordinance' && !empty($row["ordinance_no"])) {
+                                    $docNumber = htmlspecialchars($row["ordinance_no"]);
                                 }
-                            } else {
-                                echo "<tr><td colspan='6' class='text-center'>No archived documents found</td></tr>";
-                            }
 
-                            mysqli_close($conn);
-                            ?>
-                        </tbody>
-                    </table>
+                                echo "<td><a href='document_info.php?id=" . urlencode($row["resolution_no"]) . "'>" . $docNumber . "</a></td>";
+                                echo "<td>" . htmlspecialchars($row["Title"]) . "</td>";
+                                echo "<td>" . htmlspecialchars($row["Author"]) . "</td>";
+                                echo "<td>" . date('Y-m-d', strtotime($row["Date Published"])) . "</td>";
+                                echo "<td>" . htmlspecialchars($row["Category"]) . "</td>";
+                                echo "<td>" . htmlspecialchars($row["d_status"]) . "</td>";
+                                
+                                // Display approval timestamp
+                                echo "<td>" . ($row['approval_timestamp'] ? date('F d, Y H:i:s A', strtotime($row['approval_timestamp'])) : 'Not Approved Yet') . "</td>";
+                                
+                               // Restore action
+echo "<td>";
+echo "<form action='archived_documents.php' method='POST'>";
+
+// Check if resolution_no exists, use it if available, otherwise check for ordinance_no
+if (!empty($row['resolution_no'])) {
+    echo "<input type='hidden' name='resolution_no' value='" . htmlspecialchars($row['resolution_no']) . "'>";
+} elseif (!empty($row['ordinance_no'])) {
+    echo "<input type='hidden' name='ordinance_no' value='" . htmlspecialchars($row['ordinance_no']) . "'>";
+}
+
+echo "<button type='submit' name='restore' class='btn btn-success btn-sm'>Restore</button>";
+echo "</form>";
+echo "</td>";
+echo "</tr>";
+
+                            }
+                        } else {
+                            echo "<tr><td colspan='9' class='text-center'>No archived documents found</td></tr>";
+                        }
+
+                        mysqli_close($conn);
+                        ?>
+                    </tbody>
+                </table>
                 </div>
             </div>
+        </div>
         </div>
     </section>
 

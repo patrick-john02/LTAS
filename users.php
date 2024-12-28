@@ -80,11 +80,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   <link rel="stylesheet" href="assets/plugins/summernote/summernote-bs4.min.css">
   <link href="https://unpkg.com/ionicons@4.5.10-0/dist/css/ionicons.min.css" rel="stylesheet">
 
-
+<!-- <style>
+     .table-responsive {
+            overflow-x: auto;
+        }
+        @media (max-width: 768px) {
+            .table th, .table td {
+                padding: 8px;
+            }
+            .btn {
+                font-size: 12px;
+            }
+            .card-header, .card-body {
+                padding: 15px;
+            }
+        }
+</style> -->
 
 
 </head>
-<body class="hold-transition sidebar-mini layout-fixed">
+<body class="hold-transition sidebar-mini">
 <div class="wrapper">
     <div class="preloader flex-column justify-content-center align-items-center">
         <img class="animation__shake" src="image/logo1.png" alt="AdminLTELogo" height="60" width="60">
@@ -109,13 +124,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="container-fluid">
                 <div class="card">
                     <div class="card-header">
+                    <div class="card-body">
                         
                         <button id="add-button" class="btn btn-primary float-right" data-toggle="modal" data-target="#addUserModal">Add User</button>
                         </div>
-                    <div class="card-body">
-                    <table id="example1" class="table table-bordered table-striped">    
-    <thead>
-        <tr>
+                    
+                        <div class="table-responsive">
+                            <table id="example1" class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
             <th>Username</th>
             <th>Email</th>
             <th>Firstname</th>
@@ -179,16 +196,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
     $conn->close();
     ?>
-    </tbody>
-</table>
+        </tbody>
+    </table>
 
-
-                    </div>
-                </div>
-            </div>
-        </section>
+        </div>
     </div>
-</div>
+
  <!-- Add User Modal -->
 <div class="modal fade" id="addUserModal" tabindex="-1" role="dialog" aria-labelledby="addUserModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">

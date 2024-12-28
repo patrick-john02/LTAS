@@ -169,7 +169,8 @@ ob_end_flush(); // Flush output
     </div>
         <br>
     <form action="resolution.php" method="POST" id="archive-form" enctype="multipart/form-data">
-        <table id="example1" class="table table-bordered table-striped">
+    <div class="table-responsive">  
+    <table id="example1" class="table table-bordered table-striped">
             <thead>
                 <tr>
                     <th><input type="checkbox" id="select-all"></th>
@@ -233,6 +234,7 @@ ob_end_flush(); // Flush output
         </div>
             </section>
                     </div>
+                        </div>
                         </div>
 
 <div class="modal fade" id="addDocumentModal" tabindex="-1" role="dialog" aria-labelledby="addDocumentModalLabel" aria-hidden="true">
@@ -407,12 +409,13 @@ document.querySelector("#addform .close").addEventListener("click", function() {
 <script src="assets/plugins/datatables-buttons/js/buttons.html5.min.js"></script>
 <script src="assets/plugins/datatables-buttons/js/buttons.print.min.js"></script>
 <script src="assets/plugins/datatables-buttons/js/buttons.colVis.min.js"></script>
-<script>
 
+<script>
 $(function () {
   // Select/Deselect all checkboxes
   $('#select-all').click(function () {
-    $('input[name="selected_documents[]"]').prop('checked', this.checked);
+    // Only select non-disabled checkboxes
+    $('input[name="selected_documents[]"]:not(:disabled)').prop('checked', this.checked);
     toggleArchiveButton();
   });
 

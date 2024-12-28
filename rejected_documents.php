@@ -178,6 +178,7 @@ ob_end_flush(); // Flush output
 
 
 <form action="resolution.php" method="POST" id="archive-form" enctype="multipart/form-data">
+<div class="table-responsive">
 <table id="example1" class="table table-bordered table-striped">
     <thead>
     <tr>
@@ -286,6 +287,7 @@ ob_end_flush(); // Flush output
         </div>
             </section>
                     </div>
+                        </div>
                         </div>
 
 
