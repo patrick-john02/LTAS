@@ -82,6 +82,11 @@ ob_end_flush(); // Flush output
         display: none;
     }
 
+    /* Hide the pagination slider */
+    .dataTables_paginate {
+        display: none !important;
+    }
+
     /* Table styling for print */
     table {
         width: 100%;
@@ -103,6 +108,7 @@ ob_end_flush(); // Flush output
         background: none !important;
     }
 }
+
 
 
 
@@ -155,9 +161,9 @@ ob_end_flush(); // Flush output
 <div class="card-body">
      <!-- Status Filtering -->
      <!-- Combined Status and Date Filtering Form -->
-     <form method="GET" id="filter-form" class="mb-3">
+     <!-- <form method="GET" id="filter-form" class="mb-3">
     <div class="form-row">
-        <!-- Status Filtering -->
+       
         <div class="col-md-4">
             <label for="status-filter">Filter by Status:</label>
             <select name="status_filter" id="status-filter" class="form-control" style="width: 200px; display: inline-block;">
@@ -171,7 +177,7 @@ ob_end_flush(); // Flush output
         </div>
         <div class="col-md-3">
             <button type="submit" class="btn btn-primary mt-0">Filter</button>
-        </div>
+        </div> -->
         <!-- Date Filtering -->
         <!-- <div class="col-md-4">
             <label for="start-date">Filter by Date:</label>
@@ -185,10 +191,10 @@ ob_end_flush(); // Flush output
 
         <!-- Submit Button -->
        
-        <!-- <button onclick="window.print();" class="btn btn-secondary" id="print-button">Print Report</button> -->
         
-    </div>
-</form>
+        <div class="col-md-4"><button onclick="window.print();" class="btn btn-secondary" id="print-button">Print Report</button></div>
+    <br>
+
 
 
 <form action="resolution.php" method="POST" id="archive-form" enctype="multipart/form-data">

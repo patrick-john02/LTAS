@@ -120,10 +120,8 @@ ob_end_flush(); // Flush output
         <section class="content">
             <div class="container-fluid">
                 <div class="card">
-                    <div class="card-header">
-        <button type="button" class="btn btn-primary float-right" data-toggle="modal" data-target="#addDocumentModal">
-    Add New Ordinance
-</button>
+
+
 
 <div id="print-header">
 <h3 style="font-family: 'Georgia, serif', Times, serif; font-size: 20px; font-weight: bold; text-align: center;">
@@ -139,13 +137,12 @@ ob_end_flush(); // Flush output
 
 
 
-</div>
+
 <div class="card-body">
     <!-- Status Filtering -->
      <!-- Combined Status and Date Filtering Form -->
-     <form method="GET" id="filter-form" class="mb-3">
+     <!-- <form method="GET" id="filter-form" class="mb-3">
     <div class="form-row">
-        <!-- Status Filtering -->
         <div class="col-md-4">
             <label for="status-filter">Filter by Status:</label>
             <select name="status_filter" id="status-filter" class="form-control" style="width: 200px; display: inline-block;">
@@ -158,16 +155,19 @@ ob_end_flush(); // Flush output
             <div class="col-md-3">
             <button type="submit" class="btn btn-primary mt-0">Filter</button>
         </div>
-        </div>
+        </div> -->
+
+ 
 
 
-        <!-- <button type="button" class="btn btn-secondary" onclick="printTable();" id="print-button">
-    Print Report
-</button> -->
-
-        
+    <div class="card-header">
+    <div class="col-md-4">
+        <button onclick="window.print();" class="btn btn-secondary" id="print-button">Print Report</button>
     </div>
-        <br>
+        
+    <button type="button" class="btn btn-primary float-right" data-toggle="modal" data-target="#addDocumentModal">
+    Add New Ordinance
+</button>
     <form action="resolution.php" method="POST" id="archive-form" enctype="multipart/form-data">
     <div class="table-responsive">  
     <table id="example1" class="table table-bordered table-striped">
