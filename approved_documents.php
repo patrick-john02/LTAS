@@ -5,26 +5,70 @@ include('config.php');
 include('./includes/navbar.php');
 include('./includes/sidebar.php');
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_documents'])) {
-    $selectedDocs = $_POST['selected_documents'];
-    $placeholders = implode(',', array_fill(0, count($selectedDocs), '?'));
+// Date filtering logic
+$dateFilter = isset($_GET['date_filter']) ? $_GET['date_filter'] : '';
+$currentDate = new DateTime();
 
-    $sql = "UPDATE documents SET isArchive = 1 WHERE id IN ($placeholders)";
-    $stmt = $conn->prepare($sql);
+$startDate = '';
+$endDate = '';
 
-    $stmt->bind_param(str_repeat('i', count($selectedDocs)), ...$selectedDocs);
-
-    if ($stmt->execute()) {
-        $_SESSION['message'] = "Selected documents archived successfully!";
-    } else {
-        $_SESSION['message'] = "Failed to archive selected documents.";
-    }
-
-    header("Location: resolution.php");
-    exit();
+switch ($dateFilter) {
+    case 'today':
+        $startDate = $currentDate->format('Y-m-d 00:00:00');
+        $endDate = $currentDate->format('Y-m-d 23:59:59');
+        break;
+    case 'this_week':
+        $weekStart = new DateTime('monday this week');
+        $weekEnd = new DateTime('sunday this week');
+        $startDate = $weekStart->format('Y-m-d 00:00:00');
+        $endDate = $weekEnd->format('Y-m-d 23:59:59');
+        break;
+    case 'this_month':
+        $monthStart = new DateTime('first day of this month');
+        $monthEnd = new DateTime('last day of this month');
+        $startDate = $monthStart->format('Y-m-d 00:00:00');
+        $endDate = $monthEnd->format('Y-m-d 23:59:59');
+        break;
+    case 'this_year':
+        $yearStart = new DateTime('first day of January this year');
+        $yearEnd = new DateTime('last day of December this year');
+        $startDate = $yearStart->format('Y-m-d 00:00:00');
+        $endDate = $yearEnd->format('Y-m-d 23:59:59');
+        break;
+    default:
+        $startDate = '';
+        $endDate = '';
 }
 
-ob_end_flush(); // Flush output
+// SQL query to fetch documents
+$sql = "SELECT doc_no, Title, Author, `Date Published`, Category, d_status, id, file_path, resolution_no, ordinance_no,
+    (SELECT timestamp FROM document_timeline WHERE document_id = documents.id AND action = 'Approved' ORDER BY timestamp DESC LIMIT 1) AS timeline_approval_timestamp, approval_timestamp
+    FROM documents 
+    WHERE isArchive = 0 AND Category IN ('Resolution', 'Ordinance') AND d_status = 'Approved'";
+
+// Add date filter condition
+$params = [];
+$types = '';
+
+if (!empty($startDate) && !empty($endDate)) {
+    $sql .= " AND approval_timestamp BETWEEN ? AND ?";
+    $params[] = $startDate;
+    $params[] = $endDate;
+    $types .= 'ss';
+}
+
+// Order results by approval_timestamp descending
+$sql .= " ORDER BY approval_timestamp DESC";
+
+// Prepare and execute the query
+$stmt = $conn->prepare($sql);
+
+if (!empty($params)) {
+    $stmt->bind_param($types, ...$params);
+}
+
+$stmt->execute();
+$result = $stmt->get_result();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -162,10 +206,10 @@ ob_end_flush(); // Flush output
             <label for="date-filter">Filter by Date:</label>
             <select name="date_filter" id="date-filter" class="form-control" style="width: 400px; display: inline-block;">
                 <option value="">All Time</option>
-                <option value="today" <?php if (isset($_GET['date_filter']) && $_GET['date_filter'] === 'today') echo 'selected'; ?>>Today</option>
-                <option value="this_week" <?php if (isset($_GET['date_filter']) && $_GET['date_filter'] === 'this_week') echo 'selected'; ?>>Weekly</option>
-                <option value="this_month" <?php if (isset($_GET['date_filter']) && $_GET['date_filter'] === 'this_month') echo 'selected'; ?>>Monthly</option>
-                <option value="this_year" <?php if (isset($_GET['date_filter']) && $_GET['date_filter'] === 'this_year') echo 'selected'; ?>>Yearly</option>
+                <option value="today" <?php if ($dateFilter === 'today') echo 'selected'; ?>>Today</option>
+                <option value="this_week" <?php if ($dateFilter === 'this_week') echo 'selected'; ?>>Weekly</option>
+                <option value="this_month" <?php if ($dateFilter === 'this_month') echo 'selected'; ?>>Monthly</option>
+                <option value="this_year" <?php if ($dateFilter === 'this_year') echo 'selected'; ?>>Yearly</option>
             </select>
         </div>
         <div class="col-md-2">
@@ -182,100 +226,46 @@ ob_end_flush(); // Flush output
 
 <form action="resolution.php" method="POST" id="archive-form" enctype="multipart/form-data">
 <table id="example1" class="table table-bordered table-striped">
-    <thead>
-    <tr>
-        <th>Select</th>
-        <th>Resolution No</th>
-        <th>Title</th>
-        <th>Author</th>
-        <th>Date Published</th>
-        <th>Category</th>
-        <th>Status</th>
-        <th>Approved at </th> <!-- New Column -->
-    </tr>
-    </thead>
-    <tbody>
-    <?php
-    // Get selected status filter, start date, and end date from GET parameters
-    $statusFilter = isset($_GET['status_filter']) ? $_GET['status_filter'] : '';
-    $startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '';
-    $endDate = isset($_GET['end_date']) ? $_GET['end_date'] : '';
+        <thead>
+        <tr>
+            <th>Select</th>
+            <th>Resolution No</th>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Category</th>
+            <th>Status</th>
+            <th>Approved at</th>
+        </tr>
+        </thead>
+        <tbody>
+        <?php
+        if ($result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                echo "<tr>";
+                echo "<td><input type='checkbox' name='selected_documents[]' value='" . $row['id'] . "' class='doc-checkbox'></td>";
 
-    // Prepare SQL query to select documents from both "Resolution" and "Ordinance" categories
-    $sql = "SELECT doc_no, Title, Author, `Date Published`, Category, d_status, id, file_path, resolution_no, ordinance_no,
-            (SELECT timestamp FROM document_timeline WHERE document_id = documents.id AND action = 'Approved' ORDER BY timestamp DESC LIMIT 1) AS timeline_approval_timestamp,  approval_timestamp
-            FROM documents 
-            WHERE isArchive = 0 AND Category IN ('Resolution', 'Ordinance') AND d_status = 'Approved'"; // Both "Resolution" and "Ordinance" approved documents
+                $docNumber = '';
+                if ($row["Category"] == 'Resolution' && !empty($row["resolution_no"])) {
+                    $docNumber = htmlspecialchars($row["resolution_no"]);
+                } elseif ($row["Category"] == 'Ordinance' && !empty($row["ordinance_no"])) {
+                    $docNumber = htmlspecialchars($row["ordinance_no"]);
+                }
 
-    // Add status filter condition if set
-    if (!empty($statusFilter)) {
-        $sql .= " AND d_status = ?";
-    }
-
-    // Add date filter condition if set
-    if (!empty($startDate) && !empty($endDate)) {
-        $sql .= " AND `Date Published` BETWEEN ? AND ?";
-    } elseif (!empty($startDate)) {
-        $sql .= " AND `Date Published` >= ?";
-    } elseif (!empty($endDate)) {
-        $sql .= " AND `Date Published` <= ?";
-    }
-
-    // Order results by date descending
-    $sql .= " ORDER BY `Date Published` DESC";
-
-    // Prepare and execute query
-    $stmt = $conn->prepare($sql);
-
-    // Bind parameters
-    if (!empty($statusFilter) && !empty($startDate) && !empty($endDate)) {
-        $stmt->bind_param("sss", $statusFilter, $startDate, $endDate);
-    } elseif (!empty($statusFilter) && !empty($startDate)) {
-        $stmt->bind_param("ss", $statusFilter, $startDate);
-    } elseif (!empty($statusFilter) && !empty($endDate)) {
-        $stmt->bind_param("ss", $statusFilter, $endDate);
-    } elseif (!empty($startDate) && !empty($endDate)) {
-        $stmt->bind_param("ss", $startDate, $endDate);
-    } elseif (!empty($statusFilter)) {
-        $stmt->bind_param("s", $statusFilter);
-    } elseif (!empty($startDate)) {
-        $stmt->bind_param("s", $startDate);
-    } elseif (!empty($endDate)) {
-        $stmt->bind_param("s", $endDate);
-    }
-
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
-            echo "<tr>";
-            echo "<td><input type='checkbox' name='selected_documents[]' value='" . $row['id'] . "' class='doc-checkbox'></td>";
-            
-            // Combine resolution_no and ordinance_no based on the category
-            $docNumber = '';
-            if ($row["Category"] == 'Resolution' && !empty($row["resolution_no"])) {
-                $docNumber = htmlspecialchars($row["resolution_no"]);
-            } elseif ($row["Category"] == 'Ordinance' && !empty($row["ordinance_no"])) {
-                $docNumber = htmlspecialchars($row["ordinance_no"]);
+                echo "<td><a href='document_info.php?id=" . urlencode($row["id"]) . "'>" . $docNumber . "</a></td>";
+                echo "<td>" . htmlspecialchars($row["Title"]) . "</td>";
+                echo "<td>" . htmlspecialchars($row["Author"]) . "</td>";
+                echo "<td>" . htmlspecialchars($row["Category"]) . "</td>";
+                echo "<td>" . htmlspecialchars($row["d_status"]) . "</td>";
+                echo "<td>" . ($row['approval_timestamp'] ? date('F d, Y H:i:s A', strtotime($row['approval_timestamp'])) : 'Not Approved Yet') . "</td>";
+                echo "</tr>";
             }
-
-            echo "<td><a href='document_info.php?id=" . urlencode($row["id"]) . "'>" . $docNumber . "</a></td>";
-            echo "<td>" . htmlspecialchars($row["Title"]) . "</td>";
-            echo "<td>" . htmlspecialchars($row["Author"]) . "</td>";
-            echo "<td>" . date('Y-m-d', strtotime($row["Date Published"])) . "</td>";
-            echo "<td>" . htmlspecialchars($row["Category"]) . "</td>";
-            echo "<td>" . htmlspecialchars($row["d_status"]) . "</td>";
-            // Display approval timestamp
-            echo "<td>" . ($row['approval_timestamp'] ? date('F d, Y H:i:s A', strtotime($row['approval_timestamp'])) : 'Not Approved Yet') . "</td>";
-            echo "</tr>";
+        } else {
+            echo "<tr><td colspan='7' class='text-center'>No approved documents found</td></tr>";
         }
-    } else {
-        echo "<tr><td colspan='8' class='text-center'>No approved documents found</td></tr>";
-    }
-    ?>
-</tbody>
-</table>
+        ?>
+        </tbody>
+    </table>
+
 
 
     <button type="submit" class="btn btn-danger" id="archive-selected-btn" disabled>Archive Selected</button>

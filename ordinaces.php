@@ -120,6 +120,10 @@ ob_end_flush(); // Flush output
         <section class="content">
             <div class="container-fluid">
                 <div class="card">
+                <div class="card-header">
+                <button type="button" class="btn btn-primary float-right" data-toggle="modal" data-target="#addDocumentModal">
+    Add New Ordinance
+</button>
 
 
 
@@ -133,11 +137,7 @@ ob_end_flush(); // Flush output
     
 <strong>OFFICE OF THE SANGGUNIANG KABATAAN</strong>
 </div>
-
-
-
-
-
+</div>
 <div class="card-body">
     <!-- Status Filtering -->
      <!-- Combined Status and Date Filtering Form -->
@@ -160,14 +160,13 @@ ob_end_flush(); // Flush output
  
 
 
-    <div class="card-header">
+
     <div class="col-md-4">
         <button onclick="window.print();" class="btn btn-secondary" id="print-button">Print Report</button>
     </div>
+    <br>
         
-    <button type="button" class="btn btn-primary float-right" data-toggle="modal" data-target="#addDocumentModal">
-    Add New Ordinance
-</button>
+
     <form action="resolution.php" method="POST" id="archive-form" enctype="multipart/form-data">
     <div class="table-responsive">  
     <table id="example1" class="table table-bordered table-striped">
@@ -188,7 +187,7 @@ ob_end_flush(); // Flush output
                 $statusFilter = isset($_GET['status_filter']) ? $_GET['status_filter'] : '';
 
                 // Modify SQL query based on filter
-                $sql = "SELECT doc_no, Title, Author, `Date Published`, Category, d_status, id, file_path, ordinance_no
+                $sql = "SELECT doc_no, Title, Author, `Date Published`, Category, d_status, id, file_path, ordinance_no, approval_timestamp
                         FROM documents 
                         WHERE isArchive = 0 AND Category = 'Ordinance'";
 
@@ -218,7 +217,7 @@ ob_end_flush(); // Flush output
                         echo "<td>" . htmlspecialchars($row["Author"]) . "</td>";
                         echo "<td>" . date('Y-m-d', strtotime($row["Date Published"])) . "</td>";
                         echo "<td>" . htmlspecialchars($row["Category"]) . "</td>";
-                        echo "<td>" . htmlspecialchars($row["d_status"]) . "</td>";
+                        echo "<td>" . htmlspecialchars($row["d_status"]) . " - " . htmlspecialchars($row["approval_timestamp"]) . "</td>";
                         echo "</tr>";
                     }
                 } else {

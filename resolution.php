@@ -40,7 +40,7 @@ ob_end_flush(); // Flush output
     <link rel="stylesheet" href="assets/dist/css/adminlte.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-/* Hide the print header on screen */
+/* Hiding the print header on the screen */
 #print-header {
     display: none;
 }
@@ -65,24 +65,23 @@ ob_end_flush(); // Flush output
         font-size: 16px;
     }
 
-    /* Hide interactive elements and unnecessary parts */
     #filter-form,
     #print-button,
-    .dataTables_filter, /* Search bar */
-    .dataTables_length, /* Entries dropdown */
-    .dataTables_info,   /* Showing entries info */
-    .dataTables_paginate, /* Pagination controls */
+    .dataTables_filter, 
+    .dataTables_length, 
+    .dataTables_info, 
+    .dataTables_paginate,
     .btn,
     input[type="checkbox"] {
         display: none !important;
     }
 
-    /* Hide the checkbox column */
+    /* Hiding the checkbox column */
     th:first-child, td:first-child {
         display: none;
     }
 
-    /* Hide the pagination slider */
+    /* Hiding the pagination slider */
     .dataTables_paginate {
         display: none !important;
     }
@@ -108,15 +107,10 @@ ob_end_flush(); // Flush output
         background: none !important;
     }
 }
-
-
-
-
 </style>
 </head>
 <body class="hold-transition sidebar-mini">
 <div class="wrapper">
-
     <div class="content-wrapper">
         <div class="content-header">
             <div class="container-fluid">
@@ -196,94 +190,65 @@ ob_end_flush(); // Flush output
     <br>
 
 
-
 <form action="resolution.php" method="POST" id="archive-form" enctype="multipart/form-data">
 <div class="table-responsive">
 <table id="example1" class="table table-bordered table-striped">
-    <thead>
-        <tr>
-            <th><input type="checkbox" id="select-all"></th>
-            <th>Resolution No.</th>
-            <th>Title</th>
-            <th>Authored By</th>
-            <th>Date Published</th>
-            <th>Category</th>
-            <th>Status</th>
-        </tr>
-    </thead>
-    <tbody>
-        <?php
-        // Get selected status filter
-        $statusFilter = isset($_GET['status_filter']) ? $_GET['status_filter'] : '';
-        $startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '';
-        $endDate = isset($_GET['end_date']) ? $_GET['end_date'] : '';
+            <thead>
+                <tr>
+                    <th><input type="checkbox" id="select-all"></th>
+                    <th>Resolution No.</th>
+                    <th>Title</th>
+                    <th>Authored By</th>
+                    <th>Date Published</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                // Get selected status filter
+                $statusFilter = isset($_GET['status_filter']) ? $_GET['status_filter'] : '';
 
-        // Prepare SQL query with approval timestamp
-        $sql = "SELECT doc_no, Title, Author, `Date Published`, Category, d_status, id, file_path, resolution_no,
-                (SELECT timestamp FROM document_timeline WHERE document_id = documents.id AND action = 'Approve' ORDER BY timestamp DESC LIMIT 1) AS approval_time
-                FROM documents 
-                WHERE isArchive = 0 AND Category = 'Resolution' AND d_status IN ('Pending', 'First Reading', 'Second Reading', 'In Committee')";
+                // Modify SQL query based on filter
+                $sql = "SELECT doc_no, Title, Author, `Date Published`, Category, d_status, id, file_path, resolution_no, approval_timestamp
+                        FROM documents 
+                        WHERE isArchive = 0 AND Category = 'Resolution'";
 
-        // Add status filter condition if set
-        if (!empty($statusFilter)) {
-            $sql .= " AND d_status = ?";
-        }
+                // Apply status filter if selected
+                if (!empty($statusFilter)) {
+                    $sql .= " AND d_status = ?";
+                }
 
-        // Add date filter condition if set
-        if (!empty($startDate) && !empty($endDate)) {
-            $sql .= " AND `Date Published` BETWEEN ? AND ?";
-        } elseif (!empty($startDate)) {
-            $sql .= " AND `Date Published` >= ?";
-        } elseif (!empty($endDate)) {
-            $sql .= " AND `Date Published` <= ?";
-        }
+                $sql .= " ORDER BY (d_status = 'Pending') DESC, `Date Published` DESC";
 
-        // Order results
-        $sql .= " ORDER BY (d_status = 'Pending') DESC, `Date Published` DESC";
+                // Prepare and execute query
+                $stmt = $conn->prepare($sql);
+                if (!empty($statusFilter)) {
+                    $stmt->bind_param("s", $statusFilter);
+                }
+                $stmt->execute();
+                $result = $stmt->get_result();
 
-        // Prepare and execute query
-        $stmt = $conn->prepare($sql);
+                if ($result->num_rows > 0) {
+                    while ($row = $result->fetch_assoc()) {
+                        $isApproved = $row['d_status'] === 'Approved' ? 'disabled' : '';
 
-        // Bind parameters
-        if (!empty($statusFilter) && !empty($startDate) && !empty($endDate)) {
-            $stmt->bind_param("sss", $statusFilter, $startDate, $endDate);
-        } elseif (!empty($statusFilter) && !empty($startDate)) {
-            $stmt->bind_param("ss", $statusFilter, $startDate);
-        } elseif (!empty($statusFilter) && !empty($endDate)) {
-            $stmt->bind_param("ss", $statusFilter, $endDate);
-        } elseif (!empty($startDate) && !empty($endDate)) {
-            $stmt->bind_param("ss", $startDate, $endDate);
-        } elseif (!empty($statusFilter)) {
-            $stmt->bind_param("s", $statusFilter);
-        } elseif (!empty($startDate)) {
-            $stmt->bind_param("s", $startDate);
-        } elseif (!empty($endDate)) {
-            $stmt->bind_param("s", $endDate);
-        }
-
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        if ($result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                $isApproved = $row['d_status'] === 'Approved' ? 'disabled' : '';
-
-                echo "<tr>";
-                echo "<td><input type='checkbox' name='selected_documents[]' value='" . $row['id'] . "' class='doc-checkbox' $isApproved></td>";
-                echo "<td><a href='document_info.php?id=" . urlencode($row["id"]) . "'>" . htmlspecialchars($row["resolution_no"]) . "</a></td>";
-                echo "<td>" . htmlspecialchars($row["Title"]) . "</td>";
-                echo "<td>" . htmlspecialchars($row["Author"]) . "</td>";
-                echo "<td>" . date('Y-m-d', strtotime($row["Date Published"])) . "</td>";
-                echo "<td>" . htmlspecialchars($row["Category"]) . "</td>";
-                echo "<td>" . htmlspecialchars($row["d_status"]) . "</td>";
-                echo "</tr>";
-            }
-        } else {
-            echo "<tr><td colspan='7' class='text-center'>No documents found</td></tr>";
-        }
-        ?>
-    </tbody>
-</table>
+                        echo "<tr>";
+                        echo "<td><input type='checkbox' name='selected_documents[]' value='" . $row['id'] . "' class='doc-checkbox' $isApproved></td>";
+                        echo "<td><a href='document_info.php?id=" . urlencode($row["id"]) . "'>" . htmlspecialchars($row["resolution_no"]) . "</a></td>";
+                        echo "<td>" . htmlspecialchars($row["Title"]) . "</td>";
+                        echo "<td>" . htmlspecialchars($row["Author"]) . "</td>";
+                        echo "<td>" . date('Y-m-d', strtotime($row["Date Published"])) . "</td>";
+                        echo "<td>" . htmlspecialchars($row["Category"]) . "</td>";
+                        echo "<td>" . htmlspecialchars($row["d_status"]) . " - " . htmlspecialchars($row["approval_timestamp"]) . "</td>";
+                        echo "</tr>";
+                    }
+                } else {
+                    echo "<tr><td colspan='8' class='text-center'>No documents found</td></tr>";
+                }
+                ?>
+            </tbody>
+        </table>
 
 
     <button type="submit" class="btn btn-danger" id="archive-selected-btn" disabled>Archive Selected</button>
@@ -296,9 +261,6 @@ ob_end_flush(); // Flush output
                     </div>
                         </div>
                         </div>
-
-
-                        
 
 <div class="modal fade" id="addDocumentModal" tabindex="-1" role="dialog" aria-labelledby="addDocumentModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -406,7 +368,7 @@ function printTable() {
     
     // Add a print header and the cloned table to the new window
     newWindow.document.write('<html><head><title>Print Report</title>');
-    newWindow.document.write('<style>/* Additional
+}
 </script>
        
 <script>
@@ -456,13 +418,14 @@ document.querySelector("#addform .close").addEventListener("click", function() {
 <script src="assets/plugins/datatables-buttons/js/buttons.colVis.min.js"></script>
 <script>
 $(function () {
-  // check box features 
+  // Select/Deselect all checkboxes
   $('#select-all').click(function () {
-    $('input[name="selected_documents[]"]').prop('checked', this.checked);
+    // Only select non-disabled checkboxes
+    $('input[name="selected_documents[]"]:not(:disabled)').prop('checked', this.checked);
     toggleArchiveButton();
   });
 
-  // archive enable and disabled button
+  // Enable/Disable the archive button based on selection
   $('input[name="selected_documents[]"]').click(function () {
     toggleArchiveButton();
   });
@@ -480,14 +443,14 @@ $(function () {
     "responsive": true,
     "lengthChange": false,
     "autoWidth": false,
-    "order": [[4, 'desc']], 
+    "order": [[4, 'desc']], // Sort by the 5th column (Date Published) in descending order by default
     "columnDefs": [
       {
-        "targets": [4], 
-        "type": "date", 
+        "targets": [4], // Column index for 'Date Published'
+        "type": "date", // Ensure the column is treated as a date for sorting
         "render": function(data, type, row) {
-          
-          return data; 
+          // Ensure the data passed to DataTables is in sortable date format
+          return data; // Data is already in YYYY-MM-DD HH:MM:SS format
         }
       }
     ],
