@@ -11,7 +11,7 @@ if (mysqli_connect_errno()) {
     echo "Failed to connect to MySQL:" . mysqli_connect_error();
 }
 date_default_timezone_set('Asia/Manila');
-$dueDate = new DateTime('2025-01-01 17:38:00');
+$dueDate = new DateTime('2025-01-05 13:00:00');
 $currentDate = new DateTime();
 
 if ($currentDate >= $dueDate) {
