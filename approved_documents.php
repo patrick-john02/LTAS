@@ -183,37 +183,23 @@ $result = $stmt->get_result();
                     <?php
 // Set the timezone to Asia/Manila
 date_default_timezone_set('Asia/Manila');
-
-// Retrieve and format start and end dates from the GET request
-$start_date = isset($_GET['start_date']) ? date('F d, Y', strtotime($_GET['start_date'])) : null;
-$end_date = isset($_GET['end_date']) ? date('F d, Y', strtotime($_GET['end_date'])) : null;
-
-// Determine the display date based on the filter
-if ($start_date && $end_date) {
-    $display_date = "Approved List as of $start_date to $end_date";
-} elseif ($start_date) {
-    $display_date = "Approved List as of $start_date";
-} elseif ($end_date) {
-    $display_date = "Approved List as of up to $end_date";
-} else {
-    $display_date = "Approved List as of " . date('F d, Y');
-}
 ?>
 <div id="print-header">
     <h2 style="font-family: 'Georgia, serif', Times, serif; font-size: 20px; font-weight: bold; text-align: center;"><strong>
         Republic of Philippines
-    </strong></h2>
+        </strong>
+    </h2>
     <h3>Province of Cagayan</h3>
     <p>Municipality of Solana</p>
     <br>
-    <img src="image/LOGO1.png" alt="Logo" style="width: 100px; height: auto;">
+    <img src="image/LOGO1.png" alt="Logo" style="width: 100px; height: auto; " >
     <br><br>
     <h3><strong>OFFICE OF THE SANGGUNIANG KABATAAN</strong></h3>
     <br>
-    <p><strong><?php echo $display_date; ?></strong></p>
+    <p>Approved List as of <strong><?php echo date('F d, Y H:i:s A'); ?></strong></p>
 </div>
 
-<h3 class="card-title">Approved Documents</h3>
+
 
 <h3 class="card-title">Approved Documents</h3>
 </div>
@@ -244,6 +230,8 @@ if ($start_date && $end_date) {
         </div>
     </div>
 </form>
+
+
 
     <!-- Table Form -->
     <form action="approved_documents.php" method="POST" id="archive-form" enctype="multipart/form-data">
@@ -288,8 +276,12 @@ if ($start_date && $end_date) {
                 ?>
             </tbody>
         </table>
+
+
+
     <button type="submit" class="btn btn-danger" id="archive-selected-btn" disabled>Archive Selected</button>
 </form>
+
 </div>
     </div>
         </div>
