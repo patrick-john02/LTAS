@@ -59,6 +59,12 @@ if ($stmt) {
 }
 
 @media print {
+  /* Hide the columns: Approved on and Status */
+   /* Approved on column */
+     th:nth-child(6), td:nth-child(6)  /* Status column */ {
+        display: none;
+    }
+
     #print-header {
         display: block;
         text-align: center;
@@ -136,18 +142,23 @@ if ($stmt) {
         <button type="button" class="btn btn-primary float-right" data-toggle="modal" data-target="#addDocumentModal">
     Add New Resolution
 </button>
+<?php
+// Set the timezone to Asia/Manila
+date_default_timezone_set('Asia/Manila');
+?>
 <div id="print-header">
-<h3 style="font-family: 'Georgia, serif', Times, serif; font-size: 20px; font-weight: bold; text-align: center;">
-    Republic of Philippines
-</h3>
-<p>Province of Cagayan</p>
-<p>Municipality of Solana</p>
-    <img src="image/LOGO1.png" alt="Logo" style="width: 100px; height: auto;">
-    
-<strong>OFFICE OF THE SANGGUNIANG KABATAAN</strong>
-</div>
-
-<h3 class="card-title">Resolution List</h3>
+    <h2 style="font-family: 'Georgia, serif', Times, serif; font-size: 20px; font-weight: bold; text-align: center;"><strong>
+        Republic of Philippines
+        </strong>
+    </h2>
+    <h3>Province of Cagayan</h3>
+    <p>Municipality of Solana</p>
+    <br>
+    <img src="image/LOGO1.png" alt="Logo" style="width: 100px; height: auto; " >
+    <br><br>
+    <h3><strong>OFFICE OF THE SANGGUNIANG KABATAAN</strong></h3>
+    <br>
+    <p>Approved List of Resolutions as of <strong><?php echo date('F d, Y H:i:s A'); ?></strong></p>
 </div>
 <div class="card-body">
 
@@ -155,64 +166,70 @@ if ($stmt) {
 <br><br>
 <!-- Table -->
 <table class="table table-bordered table-striped" id="resolutionTable">
-                            <thead>
-                                <tr>
-                                    <th>Resolution No.</th>
-                                    <th>Title</th>
-                                    <th>Authored By</th>
-                                    <th>Date Published</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            <?php
-                            if ($result->num_rows > 0) {
-                                while ($row = $result->fetch_assoc()) {
-                                    $status = '';
-                                    switch ($row["d_status"]) {
-                                        case 'Pending':
-                                            $status = 'Pending';
-                                            break;
-                                        case 'First Reading':
-                                            $status = 'First Reading';
-                                            break;
-                                        case 'Second Reading':
-                                            $status = 'Second Reading';
-                                            break;
-                                        case 'In Committee':
-                                            $status = 'In Committee';
-                                            break;
-                                        default:
-                                            $status = 'Unknown';
-                                            break;
-                                    }
+    <thead>
+        <tr>
+            <th>Resolution No.</th>
+            <th>Title</th>
+            <th>Authored By</th>
+            <th>Date Published</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+    <?php
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            // Skip rows where the document status is "Approved"
+            if ($row["d_status"] === 'Approve') {
+                continue;
+            }
 
-                                    echo "<tr data-id='" . htmlspecialchars($row["id"]) . "'>";
-                                    echo "<td><a href='user_document_info.php?id=" . urlencode($row["id"]) . "'>" . htmlspecialchars($row["resolution_no"]) . "</a></td>";
-                                    echo "<td class='editable' data-column='Title'>" . htmlspecialchars($row["Title"]) . "</td>";
-                                    echo "<td class='editable' data-column='Author'>" . htmlspecialchars($row["Author"]) . "</td>";
-                                    echo "<td>" . date('Y-m-d', strtotime($row["Date Published"])) . "</td>";
-                                    echo "<td data-column='Status'>" . htmlspecialchars($status) . "</td>";
+            $status = '';
+            switch ($row["d_status"]) {
+                case 'Pending':
+                    $status = 'Pending';
+                    break;
+                case 'First Reading':
+                    $status = 'First Reading';
+                    break;
+                case 'Second Reading':
+                    $status = 'Second Reading';
+                    break;
+                case 'In Committee':
+                    $status = 'In Committee';
+                    break;
+                default:
+                    $status = 'Unknown';
+                    break;
+            }
 
-                                    // Only show the Delete button if the document status is 'Pending'
-                                    if ($row["d_status"] === 'Pending') {
-                                        echo "<td><form action='delete_document.php' method='POST'>
-                                            <input type='hidden' name='id' value='" . htmlspecialchars($row['id']) . "'>
-                                            <button type='submit' class='btn btn-danger' onclick='return confirm(\"Are you sure you want to delete this document?\");'>Delete</button>
-                                            </form></td>";
-                                    } else {
-                                        echo "<td></td>"; // No action button if the status is not 'Pending'
-                                    }
+            echo "<tr data-id='" . htmlspecialchars($row["id"]) . "'>";
+            echo "<td><a href='user_document_info.php?id=" . urlencode($row["id"]) . "'>" . htmlspecialchars($row["resolution_no"]) . "</a></td>";
+            echo "<td class='editable' data-column='Title'>" . htmlspecialchars($row["Title"]) . "</td>";
+            echo "<td class='editable' data-column='Author'>" . htmlspecialchars($row["Author"]) . "</td>";
+            echo "<td>" . date('Y-m-d', strtotime($row["Date Published"])) . "</td>";
+            echo "<td data-column='Status'>" . htmlspecialchars($status) . "</td>";
 
-                                    echo "</tr>";
-                                }
-                            } else {
-                                echo "<tr><td colspan='6' class='text-center'>No documents found</td></tr>";
-                            }
-                            ?>
-                            </tbody>
-                        </table>
+            // Only show the Delete button if the document status is 'Pending'
+            if ($row["d_status"] === 'Pending') {
+                echo "<td><form action='delete_document.php' method='POST'>
+                    <input type='hidden' name='id' value='" . htmlspecialchars($row['id']) . "'>
+                    <button type='submit' class='btn btn-danger' onclick='return confirm(\"Are you sure you want to delete this document?\");'>Delete</button>
+                    </form></td>";
+            } else {
+                echo "<td></td>"; // No action button if the status is not 'Pending'
+            }
+
+            echo "</tr>";
+        }
+    } else {
+        echo "<tr><td colspan='6' class='text-center'>No documents found</td></tr>";
+    }
+    ?>
+    </tbody>
+</table>
+
 </div>
 </div>
 </div>

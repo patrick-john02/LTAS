@@ -244,7 +244,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <form class="user" action="#" method="POST">
           <div class="form-group">
             <p>Username</p>
-            <input type="text" class="form-control form-control-user" name="username" placeholder="Enter Username...">
+            <input type="text" class="form-control form-control-user" name="username" placeholder="Enter Username..." maxlength="8>
           </div>
           <div class="form-group">
             <p>Password</p>

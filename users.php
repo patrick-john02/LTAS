@@ -215,19 +215,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <form id="addUserForm">
             <div class="modal-body">
         <label for="username">Username</label>
-        <input type="text" class="form-control" id="username" name="username" required>
+        <input type="text" class="form-control" id="username" name="username" maxlength="8" required>
     </div>
     <div class="modal-body">
         <label for="username">Email</label>
-        <input type="email" class="form-control" id="email" name="email" required>
+        <input type="email" class="form-control" id="email" name="email" maxlength="15" required>
     </div>
     <div class="modal-body">
         <label for="firstName">First Name</label>
-        <input type="text" class="form-control" id="firstName" name="firstName" required>
+        <input type="text" class="form-control" id="firstName" name="firstName" maxlength="15" required>
     </div>
     <div class="modal-body">
         <label for="lastName">Last Name</label>
-        <input type="text" class="form-control" id="lastName" name="lastName" required>
+        <input type="text" class="form-control" id="lastName" name="lastName" maxlength="15" required>
     </div>
     <div class="modal-body">
         <label for="accessLevel">Access Level</label>

@@ -1,5 +1,3 @@
-
-
 <!-- Navbar -->
 <nav class="main-header navbar navbar-expand navbar-white navbar-light">
   <!-- Left navbar links -->
@@ -12,8 +10,8 @@
     </li>
   </ul>
   
- <!-- Right navbar links -->
- <ul class="navbar-nav ml-auto">
+  <!-- Right navbar links -->
+  <ul class="navbar-nav ml-auto">
     <!-- User Info -->
     <li class="nav-item dropdown">
       <a class="nav-link" data-toggle="dropdown" href="#">
@@ -22,10 +20,10 @@
         // Use a default value if the session key is not set
         echo isset($_SESSION['username']) ? htmlspecialchars($_SESSION['username']) : 'Guest'; 
         ?>
-
       </a>
       <div class="dropdown-menu dropdown-menu-right">
-        <!-- <a href="./user_profile.php" class="dropdown-item" >
+        <!-- Open Modal Button -->
+        <!-- <a href="#" class="dropdown-item" data-toggle="modal" data-target="#profileModal">
           <i class="fas fa-user"></i> Profile
         </a> -->
         <a href="logout.php" class="dropdown-item">
@@ -33,7 +31,6 @@
         </a>
       </div>
     </li>
-    
     
     <!-- Fullscreen button -->
     <li class="nav-item">
@@ -44,69 +41,55 @@
   </ul>
 </nav>
 
-<!-- Modal for User Profile
+<!-- Modal for Profile Edit -->
 <div class="modal fade" id="profileModal" tabindex="-1" role="dialog" aria-labelledby="profileModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="profileModalLabel">Update User Profile</h5>
+        <h5 class="modal-title" id="profileModalLabel">Edit Profile</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <div class="modal-body">
-        <?php
-        // checking the user is logged in
-        if (!isset($_SESSION['username'])) {
-            header("Location: login.php"); 
-            exit();
-        }
-
-        // getting the User details in the database 
-        include('config.php'); 
-        $username = $_SESSION['username']; 
-        $query = "SELECT * FROM users WHERE username = '$username'";
-        $result = mysqli_query($conn, $query);
-
-        if (mysqli_num_rows($result) > 0) {
-            // get the User details
-            $user = mysqli_fetch_assoc($result);
-        } else {
-            header("Location: error.php");
-            exit();
-        }
-        ?>
-        <form method="POST" action="update_profile.php">
-          <div class="form-group">
-            <label for="username">Username</label>
-            <input type="text" class="form-control" id="username" name="username" value="<?php echo $user['username']; ?>" required>
-          </div>
+        <!-- Profile Edit Form -->
+        <form action="update_profile.php" method="POST">
+        <div class="form-group">
+  <label for="username">Username</label>
+  <input type="text" class="form-control" id="username" name="username" value="<?php echo htmlspecialchars($_SESSION['username']); ?>" required readonly>
+</div>
 
           <div class="form-group">
             <label for="password">Password</label>
-            <input type="password" class="form-control" id="password" name="password" value="" placeholder="Leave blank to keep current password">
+            <input type="password" class="form-control" id="password" name="password" value="" placeholder="Leave empty to keep current password">
           </div>
-
           <div class="form-group">
-            <label for="confirm_password">Confirm Password</label>
-            <input type="password" class="form-control" id="confirm_password" name="confirm_password" value="" placeholder="Leave blank to keep current password">
+            <label for="first_name">First Name</label>
+            <input type="text" class="form-control" id="first_name" name="first_name" value="<?php echo isset($_SESSION['first_name']) ? htmlspecialchars($_SESSION['first_name']) : ''; ?>" required>
           </div>
-
-          <button type="submit" class="btn btn-primary">Update</button>
+          <div class="form-group">
+            <label for="last_name">Last Name</label>
+            <input type="text" class="form-control" id="last_name" name="last_name" value="<?php echo isset($_SESSION['last_name']) ? htmlspecialchars($_SESSION['last_name']) : ''; ?>" required>
+          </div>
+          <div class="form-group">
+            <label for="position">Position</label>
+            <input type="text" class="form-control" id="position" name="position" value="<?php echo isset($_SESSION['position']) ? htmlspecialchars($_SESSION['position']) : ''; ?>" required>
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" class="form-control" id="email" name="email" value="<?php echo isset($_SESSION['email']) ? htmlspecialchars($_SESSION['email']) : ''; ?>" required>
+          </div>
+          <div class="form-group">
+            <label for="dept">Department</label>
+            <input type="text" class="form-control" id="dept" name="dept" value="<?php echo isset($_SESSION['dept']) ? htmlspecialchars($_SESSION['dept']) : ''; ?>" required>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Save changes</button>
+          </div>
         </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
       </div>
     </div>
   </div>
 </div>
-<script>
-  $(document).ready(function(){
-    // matic opening of the modal function
-    $('[data-toggle="modal"]').click(function(){
-      $('#profileModal').modal('show');
-    });
-  });
-</script>
- -->
+

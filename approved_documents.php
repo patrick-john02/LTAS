@@ -5,48 +5,40 @@ include('config.php');
 include('./includes/navbar.php');
 include('./includes/sidebar.php');
 
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_documents'])) {
+    $selectedDocs = $_POST['selected_documents'];
+    $placeholders = implode(',', array_fill(0, count($selectedDocs), '?'));
+
+    $sql = "UPDATE documents SET isArchive = 1 WHERE id IN ($placeholders)";
+    $stmt = $conn->prepare($sql);
+
+    $stmt->bind_param(str_repeat('i', count($selectedDocs)), ...$selectedDocs);
+
+    if ($stmt->execute()) {
+        $_SESSION['message'] = "Selected documents archived successfully!";
+    } else {
+        $_SESSION['message'] = "Failed to archive selected documents.";
+    }
+
+    header("Location: approved_documents.php");
+    exit();
+}
+ob_end_flush(); // Flush output
+
 // Date filtering logic
 $dateFilter = isset($_GET['date_filter']) ? $_GET['date_filter'] : '';
 $currentDate = new DateTime();
 
-$startDate = '';
-$endDate = '';
+$startDate = isset($_GET['start_date']) ? $_GET['start_date'] . ' 00:00:00' : '';
+$endDate = isset($_GET['end_date']) ? $_GET['end_date'] . ' 23:59:59' : '';
 
-switch ($dateFilter) {
-    case 'today':
-        $startDate = $currentDate->format('Y-m-d 00:00:00');
-        $endDate = $currentDate->format('Y-m-d 23:59:59');
-        break;
-    case 'this_week':
-        $weekStart = new DateTime('monday this week');
-        $weekEnd = new DateTime('sunday this week');
-        $startDate = $weekStart->format('Y-m-d 00:00:00');
-        $endDate = $weekEnd->format('Y-m-d 23:59:59');
-        break;
-    case 'this_month':
-        $monthStart = new DateTime('first day of this month');
-        $monthEnd = new DateTime('last day of this month');
-        $startDate = $monthStart->format('Y-m-d 00:00:00');
-        $endDate = $monthEnd->format('Y-m-d 23:59:59');
-        break;
-    case 'this_year':
-        $yearStart = new DateTime('first day of January this year');
-        $yearEnd = new DateTime('last day of December this year');
-        $startDate = $yearStart->format('Y-m-d 00:00:00');
-        $endDate = $yearEnd->format('Y-m-d 23:59:59');
-        break;
-    default:
-        $startDate = '';
-        $endDate = '';
-}
-
-// SQL query to fetch documents
 $sql = "SELECT doc_no, Title, Author, `Date Published`, Category, d_status, id, file_path, resolution_no, ordinance_no,
-    (SELECT timestamp FROM document_timeline WHERE document_id = documents.id AND action = 'Approved' ORDER BY timestamp DESC LIMIT 1) AS timeline_approval_timestamp, approval_timestamp
+    (SELECT timestamp FROM document_timeline WHERE document_id = documents.id AND action = 'Approve' ORDER BY timestamp DESC LIMIT 1) AS timeline_approval_timestamp, approval_timestamp
     FROM documents 
-    WHERE isArchive = 0 AND Category IN ('Resolution', 'Ordinance') AND d_status = 'Approved'";
+    WHERE isArchive = 0 AND Category IN ('Resolution', 'Ordinance') AND d_status = 'Approve'";
 
-// Add date filter condition
+// Add date filter condition if both start and end dates are provided
 $params = [];
 $types = '';
 
@@ -92,7 +84,13 @@ $result = $stmt->get_result();
 
 /* Print Styles */
 @media print {
-    /* Show the print header */
+     /* Hide the columns: Category, Status, and Approved At */
+     th:nth-child(5), td:nth-child(5), /* Category column */
+    th:nth-child(6), td:nth-child(6), /* Status column */
+    th:nth-child(7), td:nth-child(7)  /* Approved At column */ {
+        display: none;
+    }
+
     #print-header {
         display: block;
         text-align: center;
@@ -182,95 +180,116 @@ $result = $stmt->get_result();
                 <div class="card">
                     <div class="card-header">
 
+                    <?php
+// Set the timezone to Asia/Manila
+date_default_timezone_set('Asia/Manila');
 
+// Retrieve and format start and end dates from the GET request
+$start_date = isset($_GET['start_date']) ? date('F d, Y', strtotime($_GET['start_date'])) : null;
+$end_date = isset($_GET['end_date']) ? date('F d, Y', strtotime($_GET['end_date'])) : null;
+
+// Determine the display date based on the filter
+if ($start_date && $end_date) {
+    $display_date = "Approved List as of $start_date to $end_date";
+} elseif ($start_date) {
+    $display_date = "Approved List as of $start_date";
+} elseif ($end_date) {
+    $display_date = "Approved List as of up to $end_date";
+} else {
+    $display_date = "Approved List as of " . date('F d, Y');
+}
+?>
 <div id="print-header">
-<h3 style="font-family: 'Georgia, serif', Times, serif; font-size: 20px; font-weight: bold; text-align: center;">
-    Republic of Philippines
-</h3>
-<p>Province of Cagayan</p>
-<p>Municipality of Solana</p>
+    <h2 style="font-family: 'Georgia, serif', Times, serif; font-size: 20px; font-weight: bold; text-align: center;"><strong>
+        Republic of Philippines
+    </strong></h2>
+    <h3>Province of Cagayan</h3>
+    <p>Municipality of Solana</p>
+    <br>
     <img src="image/LOGO1.png" alt="Logo" style="width: 100px; height: auto;">
-    
-<strong>OFFICE OF THE SANGGUNIANG KABATAAN</strong>
+    <br><br>
+    <h3><strong>OFFICE OF THE SANGGUNIANG KABATAAN</strong></h3>
+    <br>
+    <p><strong><?php echo $display_date; ?></strong></p>
 </div>
 
-
+<h3 class="card-title">Approved Documents</h3>
 
 <h3 class="card-title">Approved Documents</h3>
 </div>
 <div class="card-body">
-
-    <form method="GET" id="filter-form" class="mb-3">
-    <div class="form-row">
-        <div class="col-md-4">
-            <label for="date-filter">Filter by Date:</label>
-            <select name="date_filter" id="date-filter" class="form-control" style="width: 400px; display: inline-block;">
-                <option value="">All Time</option>
-                <option value="today" <?php if ($dateFilter === 'today') echo 'selected'; ?>>Today</option>
-                <option value="this_week" <?php if ($dateFilter === 'this_week') echo 'selected'; ?>>Weekly</option>
-                <option value="this_month" <?php if ($dateFilter === 'this_month') echo 'selected'; ?>>Monthly</option>
-                <option value="this_year" <?php if ($dateFilter === 'this_year') echo 'selected'; ?>>Yearly</option>
-            </select>
+<form method="GET" id="filter-form" class="mb-3">
+    <div class="form-row align-items-center d-flex">
+        <!-- Date Range Filter -->
+        <div class="col-md-3 mb-2 mb-md-0">
+            <input type="date" name="start_date" id="start-date" class="form-control" value="<?php echo htmlspecialchars($_GET['start_date'] ?? ''); ?>">
         </div>
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-primary mt-0">Filter</button>
+        <div class="col-md-3 mb-2 mb-md-0">
+            <input type="date" name="end_date" id="end-date" class="form-control" value="<?php echo htmlspecialchars($_GET['end_date'] ?? ''); ?>">
         </div>
 
-       
-            <button onclick="window.print();" class="btn btn-secondary" id="print-button">Print Report</button>
+        <!-- Filter Button -->
+        <div class="col-md-2 mb-2 mb-md-0">
+            <button type="submit" class="btn btn-primary w-100">Filter Date</button>
+        </div>
 
+        <!-- Reset Button -->
+        <div class="col-md-2 mb-2 mb-md-0">
+            <a href="approved_documents.php" class="btn btn-warning w-100">Clear Filter</a>
+        </div>
+
+        <!-- Print Button -->
+        <div class="col-md-2 mb-2 mb-md-0">
+            <button onclick="window.print();" class="btn btn-secondary w-100" id="print-button">Print Report</button>
+        </div>
     </div>
 </form>
 
+    <!-- Table Form -->
+    <form action="approved_documents.php" method="POST" id="archive-form" enctype="multipart/form-data">
+        <table id="example1" class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                <th><input type="checkbox" id="select-all"></th>
+                    <th>Resolution No</th>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Approved at</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                if ($result->num_rows > 0) {
+                    while ($row = $result->fetch_assoc()) {
+                        echo "<tr>";
+                        echo "<tr>";
+                        echo "<td><input type='checkbox' name='selected_documents[]' value='" . $row['id'] . "' class='doc-checkbox'></td>";
 
+                        $docNumber = '';
+                        if ($row["Category"] == 'Resolution' && !empty($row["resolution_no"])) {
+                            $docNumber = htmlspecialchars($row["resolution_no"]);
+                        } elseif ($row["Category"] == 'Ordinance' && !empty($row["ordinance_no"])) {
+                            $docNumber = htmlspecialchars($row["ordinance_no"]);
+                        }
 
-<form action="resolution.php" method="POST" id="archive-form" enctype="multipart/form-data">
-<table id="example1" class="table table-bordered table-striped">
-        <thead>
-        <tr>
-            <th>Select</th>
-            <th>Resolution No</th>
-            <th>Title</th>
-            <th>Author</th>
-            <th>Category</th>
-            <th>Status</th>
-            <th>Approved at</th>
-        </tr>
-        </thead>
-        <tbody>
-        <?php
-        if ($result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                echo "<tr>";
-                echo "<td><input type='checkbox' name='selected_documents[]' value='" . $row['id'] . "' class='doc-checkbox'></td>";
-
-                $docNumber = '';
-                if ($row["Category"] == 'Resolution' && !empty($row["resolution_no"])) {
-                    $docNumber = htmlspecialchars($row["resolution_no"]);
-                } elseif ($row["Category"] == 'Ordinance' && !empty($row["ordinance_no"])) {
-                    $docNumber = htmlspecialchars($row["ordinance_no"]);
+                        echo "<td><a href='document_info.php?id=" . urlencode($row["id"]) . "'>" . $docNumber . "</a></td>";
+                        echo "<td>" . htmlspecialchars($row["Title"]) . "</td>";
+                        echo "<td>" . htmlspecialchars($row["Author"]) . "</td>";
+                        echo "<td>" . htmlspecialchars($row["Category"]) . "</td>";
+                        echo "<td>" . htmlspecialchars($row["d_status"]) . "</td>";
+                        echo "<td>" . ($row['approval_timestamp'] ? date('F d, Y H:i:s A', strtotime($row['approval_timestamp'])) : 'Not Approved Yet') . "</td>";
+                        echo "</tr>";
+                    }
+                } else {
+                    echo "<tr><td colspan='7' class='text-center'>No approved documents found</td></tr>";
                 }
-
-                echo "<td><a href='document_info.php?id=" . urlencode($row["id"]) . "'>" . $docNumber . "</a></td>";
-                echo "<td>" . htmlspecialchars($row["Title"]) . "</td>";
-                echo "<td>" . htmlspecialchars($row["Author"]) . "</td>";
-                echo "<td>" . htmlspecialchars($row["Category"]) . "</td>";
-                echo "<td>" . htmlspecialchars($row["d_status"]) . "</td>";
-                echo "<td>" . ($row['approval_timestamp'] ? date('F d, Y H:i:s A', strtotime($row['approval_timestamp'])) : 'Not Approved Yet') . "</td>";
-                echo "</tr>";
-            }
-        } else {
-            echo "<tr><td colspan='7' class='text-center'>No approved documents found</td></tr>";
-        }
-        ?>
-        </tbody>
-    </table>
-
-
-
+                ?>
+            </tbody>
+        </table>
     <button type="submit" class="btn btn-danger" id="archive-selected-btn" disabled>Archive Selected</button>
 </form>
-
 </div>
     </div>
         </div>
@@ -362,7 +381,7 @@ $result = $stmt->get_result();
                     <option value="First Reading">First Reading</option>
                     <option value="Second Reading">Second Reading</option>
                     <option value="In Committee">In Committee</option>
-                    <option value="Approved">Approved</option>
+                    <option value="Approve">Approved</option>
                 </select>
             </div>
             

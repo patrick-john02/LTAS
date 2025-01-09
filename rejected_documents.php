@@ -5,6 +5,7 @@ include('config.php');
 include('./includes/navbar.php');
 include('./includes/sidebar.php');
 
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_documents'])) {
     $selectedDocs = $_POST['selected_documents'];
     $placeholders = implode(',', array_fill(0, count($selectedDocs), '?'));
@@ -20,11 +21,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_documents'])
         $_SESSION['message'] = "Failed to archive selected documents.";
     }
 
-    header("Location: resolution.php");
+    header("Location: rejected_documents.php");
     exit();
 }
-
 ob_end_flush(); // Flush output
+
+// Date filtering logic
+$dateFilter = isset($_GET['date_filter']) ? $_GET['date_filter'] : '';
+$currentDate = new DateTime();
+
+$startDate = isset($_GET['start_date']) ? $_GET['start_date'] . ' 00:00:00' : '';
+$endDate = isset($_GET['end_date']) ? $_GET['end_date'] . ' 23:59:59' : '';
+
+$sql = "SELECT doc_no, Title, Author, `Date Published`, Category, d_status, id, file_path, resolution_no, ordinance_no,
+    (SELECT timestamp FROM document_timeline WHERE document_id = documents.id AND action = 'Reject' ORDER BY timestamp DESC LIMIT 1) AS timeline_approval_timestamp, approval_timestamp
+    FROM documents 
+    WHERE isArchive = 0 AND Category IN ('Resolution', 'Ordinance') AND d_status = 'Reject'";
+
+// Add date filter condition if both start and end dates are provided
+$params = [];
+$types = '';
+
+if (!empty($startDate) && !empty($endDate)) {
+    $sql .= " AND approval_timestamp BETWEEN ? AND ?";
+    $params[] = $startDate;
+    $params[] = $endDate;
+    $types .= 'ss';
+}
+
+// Order results by approval_timestamp descending
+$sql .= " ORDER BY approval_timestamp DESC";
+
+// Prepare and execute the query
+$stmt = $conn->prepare($sql);
+
+if (!empty($params)) {
+    $stmt->bind_param($types, ...$params);
+}
+
+$stmt->execute();
+$result = $stmt->get_result();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -48,7 +84,12 @@ ob_end_flush(); // Flush output
 
 /* Print Styles */
 @media print {
-    /* Show the print header */
+     th:nth-child(5), td:nth-child(5), /* Category column */
+    th:nth-child(6), td:nth-child(6), /* Status column */
+    th:nth-child(7), td:nth-child(7)  /* Rejected At column */ {
+        display: none;
+    }
+
     #print-header {
         display: block;
         text-align: center;
@@ -104,6 +145,9 @@ ob_end_flush(); // Flush output
         background: none !important;
     }
 }
+
+
+
 </style>
 </head>
 <body class="hold-transition sidebar-mini">
@@ -114,7 +158,7 @@ ob_end_flush(); // Flush output
             <div class="container-fluid">
                 <div class="row mb-2">
                     <div class="col-sm-6">
-                        <h1 class="m-0">Dashboard</h1>
+                        
                         <?php if (isset($_SESSION['message'])): ?>
     <div class="alert alert-info">
         <?php echo $_SESSION['message']; unset($_SESSION['message']); ?>
@@ -135,16 +179,37 @@ ob_end_flush(); // Flush output
                 <div class="card">
                     <div class="card-header">
 
+                    <?php
+// Set the timezone to Asia/Manila
+date_default_timezone_set('Asia/Manila');
 
+// Retrieve and format start and end dates from the GET request
+$start_date = isset($_GET['start_date']) ? date('F d, Y', strtotime($_GET['start_date'])) : null;
+$end_date = isset($_GET['end_date']) ? date('F d, Y', strtotime($_GET['end_date'])) : null;
+
+// Determine the display date based on the filter
+if ($start_date && $end_date) {
+    $display_date = "Approved List as of $start_date to $end_date";
+} elseif ($start_date) {
+    $display_date = "Approved List as of $start_date";
+} elseif ($end_date) {
+    $display_date = "Approved List as of up to $end_date";
+} else {
+    $display_date = "Approved List as of " . date('F d, Y');
+}
+?>
 <div id="print-header">
-<h3 style="font-family: 'Georgia, serif', Times, serif; font-size: 20px; font-weight: bold; text-align: center;">
-    Republic of Philippines
-</h3>
-<p>Province of Cagayan</p>
-<p>Municipality of Solana</p>
+    <h2 style="font-family: 'Georgia, serif', Times, serif; font-size: 20px; font-weight: bold; text-align: center;"><strong>
+        Republic of Philippines
+    </strong></h2>
+    <h3>Province of Cagayan</h3>
+    <p>Municipality of Solana</p>
+    <br>
     <img src="image/LOGO1.png" alt="Logo" style="width: 100px; height: auto;">
-    
-<strong>OFFICE OF THE SANGGUNIANG KABATAAN</strong>
+    <br><br>
+    <h3><strong>OFFICE OF THE SANGGUNIANG KABATAAN</strong></h3>
+    <br>
+    <p><strong><?php echo $display_date; ?></strong></p>
 </div>
 
 
@@ -152,131 +217,78 @@ ob_end_flush(); // Flush output
 <h3 class="card-title">Rejected Documents</h3>
 </div>
 <div class="card-body">
-
-    <form method="GET" id="filter-form" class="mb-3">
-    <div class="form-row">
-        <div class="col-md-4">
-            <label for="date-filter">Filter by Date:</label>
-            <select name="date_filter" id="date-filter" class="form-control" style="width: 400px; display: inline-block;">
-                <option value="">All Time</option>
-                <option value="today" <?php if (isset($_GET['date_filter']) && $_GET['date_filter'] === 'today') echo 'selected'; ?>>Today</option>
-                <option value="this_week" <?php if (isset($_GET['date_filter']) && $_GET['date_filter'] === 'this_week') echo 'selected'; ?>>Weekly</option>
-                <option value="this_month" <?php if (isset($_GET['date_filter']) && $_GET['date_filter'] === 'this_month') echo 'selected'; ?>>Monthly</option>
-                <option value="this_year" <?php if (isset($_GET['date_filter']) && $_GET['date_filter'] === 'this_year') echo 'selected'; ?>>Yearly</option>
-            </select>
+<form method="GET" id="filter-form" class="mb-3">
+    <div class="form-row align-items-center d-flex">
+        <!-- Date Range Filter -->
+        <div class="col-md-3 mb-2 mb-md-0">
+            <input type="date" name="start_date" id="start-date" class="form-control" value="<?php echo htmlspecialchars($_GET['start_date'] ?? ''); ?>">
         </div>
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-primary mt-0">Filter</button>
+        <div class="col-md-3 mb-2 mb-md-0">
+            <input type="date" name="end_date" id="end-date" class="form-control" value="<?php echo htmlspecialchars($_GET['end_date'] ?? ''); ?>">
         </div>
 
-       
-            <button onclick="window.print();" class="btn btn-secondary" id="print-button">Print Report</button>
+        <!-- Filter Button -->
+        <div class="col-md-2 mb-2 mb-md-0">
+            <button type="submit" class="btn btn-primary w-100">Filter Date</button>
+        </div>
 
+        <!-- Reset Button -->
+        <div class="col-md-2 mb-2 mb-md-0">
+            <a href="Rejected_documents.php" class="btn btn-warning w-100">Reset Filter</a>
+        </div>
+
+        <!-- Print Button -->
+        <div class="col-md-2 mb-2 mb-md-0">
+            <button onclick="window.print();" class="btn btn-secondary w-100" id="print-button">Print Report</button>
+        </div>
     </div>
 </form>
 
 
 
-<form action="resolution.php" method="POST" id="archive-form" enctype="multipart/form-data">
-<div class="table-responsive">
-<table id="example1" class="table table-bordered table-striped">
-    <thead>
-    <tr>
-        <th>Select</th>
-        <th>Resolution No</th>
-        <th>Title</th>
-        <th>Author</th>
-        <th>Date Published</th>
-        <th>Category</th>
-        <th>Status</th>
-    </tr>
-    </thead>
-    <tbody>
-    <?php
-    // Get selected status filter, start date, and end date from GET parameters
-    $statusFilter = isset($_GET['status_filter']) ? $_GET['status_filter'] : '';
-    $startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '';
-    $endDate = isset($_GET['end_date']) ? $_GET['end_date'] : '';
+    <!-- Table Form -->
+    <form action="Rejected_documents.php" method="POST" id="archive-form" enctype="multipart/form-data">
+        <table id="example1" class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Select</th>
+                    <th>Resolution No</th>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <!-- <th>Approved at</th> -->
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                if ($result->num_rows > 0) {
+                    while ($row = $result->fetch_assoc()) {
+                        echo "<tr>";
+                        echo "<td><input type='checkbox' name='selected_documents[]' value='" . $row['id'] . "' class='doc-checkbox'></td>";
 
-    // Prepare SQL query to select documents from both "Resolution" and "Ordinance" categories with status 'Reject'
-    $sql = "SELECT doc_no, Title, Author, `Date Published`, Category, d_status, id, file_path, resolution_no, ordinance_no,
-            (SELECT timestamp FROM document_timeline WHERE document_id = documents.id AND action = 'Reject' ORDER BY timestamp DESC LIMIT 1) AS rejection_time
-            FROM documents 
-            WHERE isArchive = 0 AND Category IN ('Resolution', 'Ordinance') AND d_status = 'Reject'"; // Filter for rejected documents
+                        $docNumber = '';
+                        if ($row["Category"] == 'Resolution' && !empty($row["resolution_no"])) {
+                            $docNumber = htmlspecialchars($row["resolution_no"]);
+                        } elseif ($row["Category"] == 'Ordinance' && !empty($row["ordinance_no"])) {
+                            $docNumber = htmlspecialchars($row["ordinance_no"]);
+                        }
 
-    // Add status filter condition if set (for rejected)
-    if (!empty($statusFilter)) {
-        $sql .= " AND d_status = ?";
-    }
+                        echo "<td><a href='document_info.php?id=" . urlencode($row["id"]) . "'>" . $docNumber . "</a></td>";
+                        echo "<td>" . htmlspecialchars($row["Title"]) . "</td>";
+                        echo "<td>" . htmlspecialchars($row["Author"]) . "</td>";
+                        echo "<td>" . htmlspecialchars($row["Category"]) . "</td>";
+                        echo "<td>" . htmlspecialchars($row["d_status"]) . "</td>";
+                        echo "<td>" . ($row['approval_timestamp'] ? date('F d, Y H:i:s A', strtotime($row['approval_timestamp'])) : 'Not Rejected Yet') . "</td>";
+                        echo "</tr>";
+                    }
+                } else {
+                    echo "<tr><td colspan='7' class='text-center'>No Rejected documents found</td></tr>";
+                }
+                ?>
+            </tbody>
+        </table>
 
-    // Add date filter condition if set
-    if (!empty($startDate) && !empty($endDate)) {
-        $sql .= " AND `Date Published` BETWEEN ? AND ?";
-    } elseif (!empty($startDate)) {
-        $sql .= " AND `Date Published` >= ?";
-    } elseif (!empty($endDate)) {
-        $sql .= " AND `Date Published` <= ?";
-    }
-
-    // Order results by date descending
-    $sql .= " ORDER BY `Date Published` DESC";
-
-    // Prepare and execute query
-    $stmt = $conn->prepare($sql);
-
-    // Bind parameters
-    if (!empty($statusFilter) && !empty($startDate) && !empty($endDate)) {
-        $stmt->bind_param("sss", $statusFilter, $startDate, $endDate);
-    } elseif (!empty($statusFilter) && !empty($startDate)) {
-        $stmt->bind_param("ss", $statusFilter, $startDate);
-    } elseif (!empty($statusFilter) && !empty($endDate)) {
-        $stmt->bind_param("ss", $statusFilter, $endDate);
-    } elseif (!empty($startDate) && !empty($endDate)) {
-        $stmt->bind_param("ss", $startDate, $endDate);
-    } elseif (!empty($statusFilter)) {
-        $stmt->bind_param("s", $statusFilter);
-    } elseif (!empty($startDate)) {
-        $stmt->bind_param("s", $startDate);
-    } elseif (!empty($endDate)) {
-        $stmt->bind_param("s", $endDate);
-    }
-
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
-            echo "<tr>";
-            echo "<td><input type='checkbox' name='selected_documents[]' value='" . $row['id'] . "' class='doc-checkbox'></td>";
-            
-            // Combine resolution_no and ordinance_no based on the category
-            $docNumber = '';
-            if ($row["Category"] == 'Resolution' && !empty($row["resolution_no"])) {
-                $docNumber = htmlspecialchars($row["resolution_no"]);
-            } elseif ($row["Category"] == 'Ordinance' && !empty($row["ordinance_no"])) {
-                $docNumber = htmlspecialchars($row["ordinance_no"]);
-            }
-
-            echo "<td><a href='document_info.php?id=" . urlencode($row["id"]) . "'>" . $docNumber . "</a></td>";
-            echo "<td>" . htmlspecialchars($row["Title"]) . "</td>";
-            echo "<td>" . htmlspecialchars($row["Author"]) . "</td>";
-            echo "<td>" . date('Y-m-d', strtotime($row["Date Published"])) . "</td>";
-            echo "<td>" . htmlspecialchars($row["Category"]) . "</td>";
-            echo "<td>" . htmlspecialchars($row["d_status"]) . "</td>";
-            // Display rejection timestamp
-
-            echo "</tr>";
-        }
-    } else {
-        echo "<tr><td colspan='8' class='text-center'>No rejected documents found</td></tr>";
-    }
-    ?>
-</tbody>
-
-
-
-
-</table>
 
 
     <button type="submit" class="btn btn-danger" id="archive-selected-btn" disabled>Archive Selected</button>
@@ -287,7 +299,6 @@ ob_end_flush(); // Flush output
         </div>
             </section>
                     </div>
-                        </div>
                         </div>
 
 
@@ -374,7 +385,7 @@ ob_end_flush(); // Flush output
                     <option value="First Reading">First Reading</option>
                     <option value="Second Reading">Second Reading</option>
                     <option value="In Committee">In Committee</option>
-                    <option value="Reject">Reject</option>
+                    <option value="Approve">Approved</option>
                 </select>
             </div>
             

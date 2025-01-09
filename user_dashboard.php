@@ -23,8 +23,8 @@ $user_id = $_SESSION['userid'];
 
 // Queries to count document statuses for the current user
 $query_pending = "SELECT COUNT(*) as pending_count FROM documents WHERE d_status = 'Pending' AND user_id = ?";
-$query_approved = "SELECT COUNT(*) as approved_count FROM documents WHERE d_status = 'Approved' AND user_id = ?";
-$query_rejected = "SELECT COUNT(*) as rejected_count FROM documents WHERE d_status = 'Rejected' AND user_id = ?";
+$query_approved = "SELECT COUNT(*) as approved_count FROM documents WHERE d_status = 'Approve' AND user_id = ?";
+$query_rejected = "SELECT COUNT(*) as rejected_count FROM documents WHERE d_status = 'Reject' AND user_id = ?";
 $query_on_process = "SELECT COUNT(*) as on_process_count FROM documents WHERE d_status IN ('First Reading', 'In Committee', 'Second Reading') AND user_id = ?";
 
 // Prepare and execute the queries
@@ -222,7 +222,7 @@ $stmt_on_process->close();
 
                                 // Add conditional class for status
                                 $statusClass = '';
-                                if ($row['d_status'] == 'Approved') {
+                                if ($row['d_status'] == 'Approve') {
                                     $statusClass = 'badge badge-success';
                                 } elseif ($row['d_status'] == 'Denied') {
                                     $statusClass = 'badge badge-danger';

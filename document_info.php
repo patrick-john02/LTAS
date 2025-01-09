@@ -42,7 +42,7 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
 }
 
 function logDocumentAction($conn, $document_id, $action, $performed_by, $comment = null) {
-    $valid_actions = ['Pending', 'First Reading', 'Second Reading', 'In Committee', 'Approved', 'Reject'];
+    $valid_actions = ['Pending', 'First Reading', 'Second Reading', 'In Committee', 'Approve', 'Reject'];
     if (in_array($action, $valid_actions)) {
         $sql = "INSERT INTO document_timeline (document_id, action, performed_by, comment) 
                 VALUES (?, ?, ?, ?)";
@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['d_status'])) {
     $comment = isset($_POST['comment']) ? $_POST['comment'] : null;
 
     if ($old_status !== $new_status) {
-        $sql_update = "UPDATE documents SET d_status = ?, approval_timestamp = CASE WHEN ? = 'Approved' THEN NOW() ELSE approval_timestamp END WHERE id = ?";
+        $sql_update = "UPDATE documents SET d_status = ?, approval_timestamp = CASE WHEN ? = 'Approve' THEN NOW() ELSE approval_timestamp END WHERE id = ?";
         $stmt_update = $conn->prepare($sql_update);
         $stmt_update->bind_param('ssi', $new_status, $new_status, $id);
         $stmt_update->execute();
@@ -157,11 +157,39 @@ ob_end_flush(); // Flush output
         min-width: 3rem;
         border-radius: 6.25rem;
         opacity: .5;
+    }.document-details{
+        padding: 20px;
     }
+    
 </style>
 <body>
-<div class="container mt-3">
-<a href="<?php 
+<body class="hold-transition sidebar-mini">
+<div class="wrapper">
+    <div class="content-wrapper">
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">Ordinance Lists</h1>
+                        <?php if (isset($_SESSION['message'])): ?>
+    <div class="alert alert-info">
+        <?php echo $_SESSION['message']; unset($_SESSION['message']); ?>
+    </div>
+<?php endif; ?>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="admin_dashboard.php">Home</a></li>
+                            <li class="breadcrumb-item active">Ordinances</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+      
+<div class="container my-8">
+<a href="
+    <?php
     // Check the category and set the redirection accordingly
     if ($document['Category'] === 'Resolution') {
         echo 'resolution.php';
@@ -170,112 +198,110 @@ ob_end_flush(); // Flush output
     } else {
         echo 'default_page.php'; // In case the category is not "Resolution" or "Ordinance"
     }
-?>" class="btn btn-primary">Back to List</a>
+    ?>" class="btn btn-primary">
+    <i class="fas fa-arrow-left"></i> <!-- Use the left arrow icon or any other icon you prefer -->
+</a>
 
-
-<!--displaying of full detail of documents-->
-        <h2>Document Details</h2>
-        
-        <table class="table table-bordered">
-            <!-- <tr>
-                <th>Resolution No.</th>
-                <td><?php echo htmlspecialchars($document['resolution_no']); ?></td>
-            </tr> -->
-            <tr>
-                <th>Title</th>
-                <td><?php echo htmlspecialchars($document['Title']); ?></td>
-            </tr>
-            <tr>
-                <th>Description</th>
-                <td><?php echo htmlspecialchars($document['Description']); ?></td>
-            </tr>
-            <tr>
-                <th>Author</th>
-                <td><?php echo htmlspecialchars($document['Author']); ?></td>
-            </tr>
-            <tr>
-                <th>Date Published</th>
-                <td><?php echo htmlspecialchars($document['Date Published']); ?></td>
-            </tr>
-            <tr>
-                <th>Category</th>
-                <td><?php echo htmlspecialchars($document['Category']); ?></td>
-            </tr>
-            <tr>
-            <th>Status</th>
-    <td>
-    <form method="POST" action="">
-    <select id="d_status" name="d_status" class="form-control" data-current-status="<?php echo htmlspecialchars($document['d_status']); ?>">
-        <option value="Pending" <?php if ($document['d_status'] === 'Pending') echo 'selected'; ?>>Pending</option>
-        <option value="First Reading" <?php if ($document['d_status'] === 'First Reading') echo 'selected'; ?>>First Reading</option>
-        <option value="Second Reading" <?php if ($document['d_status'] === 'Second Reading') echo 'selected'; ?>>Second Reading</option>
-        <option value="In Committee" <?php if ($document['d_status'] === 'In Committee') echo 'selected'; ?>>In Committee</option>
-        <option value="Approved" <?php if ($document['d_status'] === 'Approve') echo 'selected'; ?>>Approved</option>
-        <option value="Reject" <?php if ($document['d_status'] === 'Reject') echo 'selected'; ?>>Reject</option>
-    </select>
-    <textarea name="comment" class="form-control mt-2" placeholder="Enter admin comment..."></textarea>
-    <div id="validationMessage" class="text-danger mt-1"></div>
-    <button type="submit" id="updateButton" class="btn btn-success mt-2" style="display: none;">Update Status</button> <!-- Button hidden by default -->
-</form>
-
-
-    </td>
-</tr>
-            <tr>
-                <th>File</th>
-                <td>
-                    <?php if (!empty($document['file_path'])): ?>
-                        <a href="<?php echo htmlspecialchars($document['file_path']); ?>" target="_blank">View File</a>
-                    <?php else: ?>
-                        No file attached
-                    <?php endif; ?>
-                </td>
-            </tr>
-        </table>
-    </div>
-<!-- this is the timeline -->
-    <div class="container mt-5">
-    <h3>Document Timeline</h3>
-    <div class="row">
-        <div class="col">
-        <div class="timeline-steps">
-    <?php
-    // Fetch timeline records 
-    $sql_timeline = "SELECT action, timestamp, comment 
-                     FROM document_timeline 
-                     WHERE document_id = ? 
-                     ORDER BY timestamp DESC";
-    $stmt_timeline = $conn->prepare($sql_timeline);
-    $stmt_timeline->bind_param('i', $id);
-    $stmt_timeline->execute();
-    $result_timeline = $stmt_timeline->get_result();
-
-    if ($result_timeline->num_rows > 0):
-        while ($row = $result_timeline->fetch_assoc()):
-            $action = htmlspecialchars($row['action']);
-            $comment = htmlspecialchars($row['comment']);
-    ?>
-    <div class="timeline-step">
-        <div class="timeline-content" data-toggle="popover" data-trigger="hover" data-placement="top"
-             title="" data-content="<?php echo $action; ?>"
-             data-original-title="<?php echo htmlspecialchars($row['timestamp']); ?>">
-            <div class="inner-circle"></div>
-            <p class="h6 mt-3 mb-1"><?php echo htmlspecialchars($row['timestamp']); ?></p>
-            <p class="h6 text-muted mb-0 mb-lg-0"><?php echo $action; ?></p>
-            <?php if ($comment): ?>
-                <p class="mt-2"><strong>Admin Comment:</strong> <?php echo $comment; ?></p>
-            <?php endif; ?>
+    <!-- Document Timeline -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Document Timeline</h5>
         </div>
-    </div>
-    <?php endwhile; ?>
-    <?php else: ?>
-        <p>No timeline actions recorded yet.</p>
-    <?php endif; ?>
+        <div class="card-body">
+            <div class="timeline-steps">
+                <?php
+                $sql_timeline = "SELECT action, timestamp, comment 
+                                 FROM document_timeline 
+                                 WHERE document_id = ? 
+                                 ORDER BY timestamp DESC";
+                $stmt_timeline = $conn->prepare($sql_timeline);
+                $stmt_timeline->bind_param('i', $id);
+                $stmt_timeline->execute();
+                $result_timeline = $stmt_timeline->get_result();
 
+                if ($result_timeline->num_rows > 0):
+                    while ($row = $result_timeline->fetch_assoc()):
+                        $action = htmlspecialchars($row['action']);
+                        $comment = htmlspecialchars($row['comment']);
+                ?>
+                <div class="timeline-step mb-3">
+                    <div class="timeline-content">
+                        <div class="inner-circle"></div>
+                        <p class="h6 mt-3 mb-1"><?php echo htmlspecialchars($row['timestamp']); ?></p>
+                        <p class="text-muted mb-1"><?php echo $action; ?></p>
+                        <?php if ($comment): ?>
+                            <p class="small text-muted"><strong>Comment:</strong> <?php echo $comment; ?></p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php endwhile; ?>
+                <?php else: ?>
+                    <p class="text-muted text-center mb-0">No timeline actions recorded yet.</p>
+                <?php endif; ?>
             </div>
+            <div class="card mb-3">
+        <div class="card-header bg-secondary text-white">Update Status</div>
+        <div class="card-body">
+            <form method="POST" action="">
+                <select id="d_status" name="d_status" class="form-control mb-2" data-current-status="<?php echo htmlspecialchars($document['d_status']); ?>">
+                    <option value="Pending" <?php if ($document['d_status'] === 'Pending') echo 'selected'; ?>>Pending</option>
+                    <option value="First Reading" <?php if ($document['d_status'] === 'First Reading') echo 'selected'; ?>>First Reading</option>
+                    <option value="Second Reading" <?php if ($document['d_status'] === 'Second Reading') echo 'selected'; ?>>Second Reading</option>
+                    <option value="In Committee" <?php if ($document['d_status'] === 'In Committee') echo 'selected'; ?>>In Committee</option>
+                    <option value="Approve" <?php if ($document['d_status'] === 'Approve') echo 'selected'; ?>>Approve</option>
+                    <option value="Reject" <?php if ($document['d_status'] === 'Reject') echo 'selected'; ?>>Reject</option>
+                </select>
+                <textarea name="comment" class="form-control mb-2" placeholder="Enter admin comment..."></textarea>
+                <div id="validationMessage" class="text-danger mb-2"></div>
+                <button type="submit" id="updateButton" class="btn btn-success" style="display: none;">Update Status</button>
+            </form>
         </div>
     </div>
 </div>
+        </div>
+    <!-- Document Details -->
+    <div class="card mb-3">
+        <div class="card-header bg-secondary text-white">Document Details</div>
+        <div class="card-body">
+            <div class="row mb-2">
+                <div class="col-md-3 font-weight-bold">Title</div>
+                <div class="col-md-9"><?php echo htmlspecialchars($document['Title']); ?></div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-3 font-weight-bold">Description</div>
+                <div class="col-md-9"><?php echo htmlspecialchars($document['Description']); ?></div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-3 font-weight-bold">Author</div>
+                <div class="col-md-9"><?php echo htmlspecialchars($document['Author']); ?></div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-3 font-weight-bold">Category</div>
+                <div class="col-md-9"><?php echo htmlspecialchars($document['Category']); ?></div>
+            </div>
+        </div>
+    </div>
+    <!-- File Information -->
+    <div class="card mb-3">
+        <div class="card-header bg-secondary text-white">File Information</div>
+        <div class="card-body">
+            <?php if (!empty($document['file_path'])): ?>
+                <a href="<?php echo htmlspecialchars($document['file_path']); ?>" target="_blank" class="btn btn-primary">View File</a>
+            <?php else: ?>
+                <p class="text-muted">No file available</p>
+            <?php endif; ?>
+        </div>
+    </div>
+    </div>
+    </div>
+    </div>
+    </div>
+    
+    
+
+    <!-- Update Status Form -->
+   
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const dStatus = document.getElementById('d_status');
@@ -287,8 +313,8 @@ document.addEventListener("DOMContentLoaded", function () {
         'Pending': ['Reject', 'First Reading'],
         'First Reading': ['Second Reading', 'Reject'],
         'Second Reading': ['In Committee', 'Reject'],
-        'In Committee': ['Approved', 'Reject'],
-        'Approved': [], 
+        'In Committee': ['Approve', 'Reject'],
+        'Approve': [], 
         'Reject': [] 
     };
 

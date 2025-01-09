@@ -36,7 +36,7 @@ if ($stmt = $conn->prepare($query)) {
 }
 // get approved document count overview
 $approved_count = 0;
-$query = "SELECT COUNT(*) as count FROM documents WHERE d_status = 'Approved'";
+$query = "SELECT COUNT(*) as count FROM documents WHERE d_status = 'Approve'";
 if ($stmt = $conn->prepare($query)) {
     $stmt->execute();
     $stmt->bind_result($approved_count);
@@ -47,7 +47,7 @@ if ($stmt = $conn->prepare($query)) {
 }
 // get pending document count overview
 $rejected_count = 0;
-$query = "SELECT COUNT(*) as count FROM documents WHERE d_status = 'Rejected'";
+$query = "SELECT COUNT(*) as count FROM documents WHERE d_status = 'Reject'";
 if ($stmt = $conn->prepare($query)) {
     $stmt->execute();
     $stmt->bind_result($rejected_count);
@@ -79,8 +79,8 @@ $months = [];
 
 $query = "SELECT 
             DATE_FORMAT(`Date Published`, '%Y-%m') as month, 
-            SUM(CASE WHEN d_status = 'Approved' THEN 1 ELSE 0 END) as approved_count, 
-            SUM(CASE WHEN d_status = 'Rejected' THEN 1 ELSE 0 END) as rejected_count 
+            SUM(CASE WHEN d_status = 'Approve' THEN 1 ELSE 0 END) as approved_count, 
+            SUM(CASE WHEN d_status = 'Reject' THEN 1 ELSE 0 END) as rejected_count 
           FROM documents 
           GROUP BY month 
           ORDER BY month ASC";

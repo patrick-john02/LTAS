@@ -46,6 +46,7 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <style>
+    /* Styling for Timeline */
     .timeline-steps {
         display: flex;
         justify-content: center;
@@ -102,90 +103,125 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
         opacity: .5;
     }
 </style>
-<body>
-<div class="container mt-3">
-    <!-- Back Button -->
-    <a href="sent_document_user.php" class="btn btn-primary">Back to List</a>
-
-    <!-- Document Details -->
-    <h2>Document Details</h2>
-    <table class="table table-bordered">
-        <tr>
-            <th>Resolution No.</th>
-            <td><?php echo htmlspecialchars($document['resolution_no']); ?></td>
-        </tr>
-        <tr>
-            <th>Title</th>
-            <td><?php echo htmlspecialchars($document['Title']); ?></td>
-        </tr>
-        <tr>
-            <th>Description</th>
-            <td><?php echo htmlspecialchars($document['Description']); ?></td>
-        </tr>
-        <tr>
-            <th>Author</th>
-            <td><?php echo htmlspecialchars($document['Author']); ?></td>
-        </tr>
-        <tr>
-            <th>Date Published</th>
-            <td><?php echo htmlspecialchars($document['Date Published']); ?></td>
-        </tr>
-        <tr>
-            <th>Category</th>
-            <td><?php echo htmlspecialchars($document['Category']); ?></td>
-        </tr>
-        <tr>
-            <th>Status</th>
-            <td><?php echo htmlspecialchars($document['d_status']); ?></td>
-        </tr>
-        <tr>
-            <th>File</th>
-            <td>
-                <?php if (!empty($document['file_path'])): ?>
-                    <a href="<?php echo htmlspecialchars($document['file_path']); ?>" target="_blank">View File</a>
-                <?php else: ?>
-                    No file attached
-                <?php endif; ?>
-            </td>
-        </tr>
-    </table>
-    </div>
-<<!-- Document Timeline -->
-<div class="mt-5">
-        <h3>Document Timeline</h3>
-        <div class="timeline-steps">
-            <?php
-            $sql_timeline = "SELECT action, timestamp, comment 
-                             FROM document_timeline 
-                             WHERE document_id = ? 
-                             ORDER BY timestamp DESC";
-            $stmt_timeline = $conn->prepare($sql_timeline);
-            $stmt_timeline->bind_param('i', $id);
-            $stmt_timeline->execute();
-            $result_timeline = $stmt_timeline->get_result();
-
-            if ($result_timeline->num_rows > 0):
-                while ($row = $result_timeline->fetch_assoc()):
-                    $action = htmlspecialchars($row['action']);
-                    $comment = htmlspecialchars($row['comment']);
-            ?>
-            <div class="timeline-step">
-                <div class="timeline-content">
-                    <div class="inner-circle"></div>
-                    <p class="h6 mt-3 mb-1"><?php echo htmlspecialchars($row['timestamp']); ?></p>
-                    <p class="h6 text-muted"><?php echo $action; ?></p>
-                    <?php if ($comment): ?>
-                        <p class="mt-2"><strong>Admin Comment:</strong> <?php echo $comment; ?></p>
-                    <?php endif; ?>
+<body class="hold-transition sidebar-mini">
+<div class="wrapper">
+    <div class="content-wrapper">
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">Document Details</h1>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="user_dashboard.php">Home</a></li>
+                            <li class="breadcrumb-item active">Document Details</li>
+                        </ol>
+                    </div>
                 </div>
             </div>
-            <?php endwhile; ?>
-            <?php else: ?>
-                <p>No timeline actions recorded yet.</p>
-            <?php endif; ?>
+        </div>
+
+        <div class="container my-4">
+            <a href="sent_document_user.php" class="btn btn-primary">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+
+            <!-- Document Details -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Document Information</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>Resolution No.</th>
+                            <td><?php echo htmlspecialchars($document['resolution_no']); ?></td>
+                        </tr>
+                        <tr>
+                            <th>Title</th>
+                            <td><?php echo htmlspecialchars($document['Title']); ?></td>
+                        </tr>
+                        <tr>
+                            <th>Description</th>
+                            <td><?php echo htmlspecialchars($document['Description']); ?></td>
+                        </tr>
+                        <tr>
+                            <th>Author</th>
+                            <td><?php echo htmlspecialchars($document['Author']); ?></td>
+                        </tr>
+                        <tr>
+                            <th>Date Published</th>
+                            <td><?php echo htmlspecialchars($document['Date Published']); ?></td>
+                        </tr>
+                        <tr>
+                            <th>Category</th>
+                            <td><?php echo htmlspecialchars($document['Category']); ?></td>
+                        </tr>
+                        <tr>
+                            <th>Status</th>
+                            <td><?php echo htmlspecialchars($document['d_status']); ?></td>
+                        </tr>
+                        <tr>
+                            <th>File</th>
+                            <td>
+                                <?php if (!empty($document['file_path'])): ?>
+                                    <a href="<?php echo htmlspecialchars($document['file_path']); ?>" target="_blank">View File</a>
+                                <?php else: ?>
+                                    No file attached
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Document Timeline -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Document Timeline</h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline-steps">
+                        <?php
+                        $sql_timeline = "SELECT action, timestamp, comment 
+                                         FROM document_timeline 
+                                         WHERE document_id = ? 
+                                         ORDER BY timestamp DESC";
+                        $stmt_timeline = $conn->prepare($sql_timeline);
+                        $stmt_timeline->bind_param('i', $id);
+                        $stmt_timeline->execute();
+                        $result_timeline = $stmt_timeline->get_result();
+
+                        if ($result_timeline->num_rows > 0):
+                            while ($row = $result_timeline->fetch_assoc()):
+                                $action = htmlspecialchars($row['action']);
+                                $comment = htmlspecialchars($row['comment']);
+                        ?>
+                        <div class="timeline-step mb-3">
+                            <div class="timeline-content">
+                                <div class="inner-circle"></div>
+                                <p class="h6 mt-3 mb-1"><?php echo htmlspecialchars($row['timestamp']); ?></p>
+                                <p class="text-muted mb-1"><?php echo $action; ?></p>
+                                <?php if ($comment): ?>
+                                    <p class="small text-muted"><strong>Admin Comment:</strong> <?php echo $comment; ?></p>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <?php endwhile; ?>
+                        <?php else: ?>
+                            <p class="text-muted text-center mb-0">No timeline actions recorded yet.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
+
+
+
 <!-- Data Tables and Assets -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 <script src="assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>

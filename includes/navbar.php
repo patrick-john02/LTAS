@@ -72,7 +72,7 @@
         <form method="POST" action="update_profile.php">
           <div class="form-group">
             <label for="username">Username</label>
-            <input type="text" class="form-control" id="username" name="username" value="<?php echo $admin['username']; ?>" required>
+            <input type="text" class="form-control" id="username" name="username" value="<?php echo $admin['username']; ?>" maxlength="15" required>
           </div>
 
           <div class="form-group">

@@ -14,56 +14,26 @@ $uid = $_SESSION['userid'];
 $startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '';
 $endDate = isset($_GET['end_date']) ? $_GET['end_date'] : '';
 
-// query para sa mga apprved reso
-$sql = "SELECT * FROM documents WHERE user_id = ? AND Category = 'Resolution' AND d_status = 'Approved'";
+// query para sa mga approved resolutions
+$sql = "SELECT * FROM documents WHERE user_id = ? AND Category = 'Resolution' AND d_status = 'Approve'";
 $params = [$uid];
 $types = "i";
 
-// this is the date filtering sheesh
-$dateFilter = isset($_GET['date_filter']) ? $_GET['date_filter'] : '';
-$currentDate = new DateTime();
-
-switch ($dateFilter) {
-    case 'today':
-        $startDate = $currentDate->format('Y-m-d 00:00:00');
-        $endDate = $currentDate->format('Y-m-d 23:59:59');
-        break;
-    case 'this_week':
-        $weekStart = new DateTime('monday this week');
-        $weekEnd = new DateTime('sunday this week');
-        $startDate = $weekStart->format('Y-m-d 00:00:00');
-        $endDate = $weekEnd->format('Y-m-d 23:59:59');
-        break;
-    case 'this_month':
-        $monthStart = new DateTime('first day of this month');
-        $monthEnd = new DateTime('last day of this month');
-        $startDate = $monthStart->format('Y-m-d 00:00:00');
-        $endDate = $monthEnd->format('Y-m-d 23:59:59');
-        break;
-    case 'this_year':
-        $yearStart = new DateTime('first day of January this year');
-        $yearEnd = new DateTime('last day of December this year');
-        $startDate = $yearStart->format('Y-m-d 00:00:00');
-        $endDate = $yearEnd->format('Y-m-d 23:59:59');
-        break;
-    default:
-        $startDate = '';
-        $endDate = '';
-}
-
-
+// Date filtering - use custom start_date and end_date if available
 if (!empty($startDate) && !empty($endDate)) {
+    $startDate = date('Y-m-d', strtotime($startDate)) . ' 00:00:00'; // Set time to 00:00:00 for start date
+    $endDate = date('Y-m-d', strtotime($endDate)) . ' 23:59:59'; // Set time to 23:59:59 for end date
     $sql .= " AND `approval_timestamp` BETWEEN ? AND ?";
     $params[] = $startDate;
     $params[] = $endDate;
-    $types .= "ss";
+    $types .= "ss"; // Add two string parameters (start and end date)
 }
 
 $sql .= " ORDER BY `approval_timestamp` DESC";
 
+// Prepare and execute the SQL statement
 $stmt = $conn->prepare($sql);
 if ($stmt) {
-
     $stmt->bind_param($types, ...$params);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -87,50 +57,64 @@ if ($stmt) {
     <link rel="stylesheet" href="assets/dist/css/adminlte.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+/* Hide the print header on screen */
 #print-header {
     display: none;
 }
 
+/* Print Styles */
 @media print {
+     /* Hide the columns: Approved on and Status */
+     th:nth-child(4), td:nth-child(4), /* Approved on column */
+     th:nth-child(5), td:nth-child(5)  /* Status column */ {
+        display: none;
+    }
+
     #print-header {
         display: block;
         text-align: center;
         margin-bottom: 20px;
     }
+
     #print-header img {
         width: 100px;
         height: auto;
     }
+
     #print-header h3,
     #print-header p {
         margin: 0;
         font-size: 16px;
     }
+
+    /* Hide interactive elements and unnecessary parts */
     #filter-form,
     #print-button,
-    .dataTables_filter, 
-    .dataTables_length,
-    .dataTables_info,   
-    .dataTables_paginate, 
+    .dataTables_filter, /* Search bar */
+    .dataTables_length, /* Entries dropdown */
+    .dataTables_info,   /* Showing entries info */
+    .dataTables_paginate, /* Pagination controls */
     .btn,
     input[type="checkbox"] {
         display: none !important;
     }
-    th:first-child, td:first-child {
-        display: table-cell !important;
-    }
+
+    /* Table styling for print */
     table {
         width: 100%;
         border-collapse: collapse;
     }
+
     th, td {
         padding: 8px;
         text-align: left;
         border: 1px solid #ddd;
     }
+
     th {
         background-color: #f2f2f2;
     }
+
     tr:hover {
         background: none !important;
     }
@@ -167,38 +151,49 @@ if ($stmt) {
         <!-- <button type="button" class="btn btn-primary float-right" data-toggle="modal" data-target="#addDocumentModal">
     Add New Resolution
 </button> -->
+<?php
+// Set the timezone to Asia/Manila
+date_default_timezone_set('Asia/Manila');
+?>
 <div id="print-header">
-<h3 style="font-family: 'Georgia, serif', Times, serif; font-size: 20px; font-weight: bold; text-align: center;">
-    Republic of Philippines
-</h3>
-<p>Province of Cagayan</p>
-<p>Municipality of Solana</p>
-    <img src="image/LOGO1.png" alt="Logo" style="width: 100px; height: auto;">
-    
-<strong>OFFICE OF THE SANGGUNIANG KABATAAN</strong>
-</div>
-
-<h3 class="card-title">Approved Resolution</h3>
+    <h2 style="font-family: 'Georgia, serif', Times, serif; font-size: 20px; font-weight: bold; text-align: center;"><strong>
+        Republic of Philippines
+        </strong>
+    </h2>
+    <h3>Province of Cagayan</h3>
+    <p>Municipality of Solana</p>
+    <br>
+    <img src="image/LOGO1.png" alt="Logo" style="width: 100px; height: auto; " >
+    <br><br>
+    <h3><strong>OFFICE OF THE SANGGUNIANG KABATAAN</strong></h3>
+    <br>
+    <p>Approved List of Resolutions as of <strong><?php echo date('F d, Y H:i:s A'); ?></strong></p>
 </div>
 <div class="card-body">
 
 <form method="GET" id="filter-form" class="mb-3">
-    <div class="row g-2">
-        <div class="col-11 col-md-5">
-            <label for="date-filter" class="form-label">Filter by Date:</label>
-            <select name="date_filter" id="date-filter" class="form-control">
-                <option value="">All Time</option>
-                <option value="today" <?php if ($dateFilter === 'today') echo 'selected'; ?>>Today</option>
-                <option value="this_week" <?php if ($dateFilter === 'this_week') echo 'selected'; ?>>This Week</option>
-                <option value="this_month" <?php if ($dateFilter === 'this_month') echo 'selected'; ?>>This Month</option>
-                <option value="this_year" <?php if ($dateFilter === 'this_year') echo 'selected'; ?>>This Year</option>
-            </select>
+    <div class="form-row align-items-center d-flex">
+        <!-- Date Range Filter -->
+        <div class="col-md-3 mb-2 mb-md-0">
+            <input type="date" name="start_date" id="start-date" class="form-control" value="<?php echo htmlspecialchars($_GET['start_date'] ?? ''); ?>">
         </div>
-        <div class="col-12 col-md-3">
-            <button type="submit" class="btn btn-primary mt-4 w-100">Filter</button>
+        <div class="col-md-3 mb-2 mb-md-0">
+            <input type="date" name="end_date" id="end-date" class="form-control" value="<?php echo htmlspecialchars($_GET['end_date'] ?? ''); ?>">
         </div>
-        <div class="col-12 col-md-3">
-            <button onclick="window.print();" class="btn btn-secondary mt-4 w-100" id="print-button">Print Report</button>
+
+        <!-- Filter Button -->
+        <div class="col-md-2 mb-2 mb-md-0">
+            <button type="submit" class="btn btn-primary w-100">Filter Date</button>
+        </div>
+
+        <!-- Reset Button -->
+        <div class="col-md-2 mb-2 mb-md-0">
+            <a href="resolution_user.php" class="btn btn-warning w-100">Clear Filter</a>
+        </div>
+
+        <!-- Print Button -->
+        <div class="col-md-2 mb-2 mb-md-0">
+            <button onclick="window.print();" class="btn btn-secondary w-100" id="print-button">Print Report</button>
         </div>
     </div>
 </form>
@@ -212,7 +207,6 @@ if ($stmt) {
                 <th>Authored By</th>
                 <th>Approved on</th>
                 <th>Status</th>
-                
             </tr>
         </thead>
         <tbody>

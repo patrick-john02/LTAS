@@ -5,6 +5,19 @@ include('config.php');
 include('./includes/navbar.php');
 include('./includes/sidebar.php');
 
+// Get selected status filter
+$statusFilter = isset($_GET['status_filter']) ? $_GET['status_filter'] : '';
+
+// Modify SQL query based on filter
+$sql = "SELECT doc_no, Title, Author, `Date Published`, Category, d_status, id, file_path, resolution_no, approval_timestamp
+FROM documents 
+WHERE isArchive = 0 AND Category = 'Resolution'";
+
+if (!empty($statusFilter)) {
+$sql .= " AND d_status = ?";
+}
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_documents'])) {
     $selectedDocs = $_POST['selected_documents'];
     $placeholders = implode(',', array_fill(0, count($selectedDocs), '?'));
@@ -40,14 +53,20 @@ ob_end_flush(); // Flush output
     <link rel="stylesheet" href="assets/dist/css/adminlte.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-/* Hiding the print header on the screen */
+/* Hide the print header on screen */
 #print-header {
     display: none;
 }
 
 /* Print Styles */
 @media print {
-    /* Show the print header */
+     /* Hide the columns: Category, Status, and Approved At */
+     th:nth-child(5), td:nth-child(5), /* Category column */
+    th:nth-child(6), td:nth-child(6), /* Status column */
+    th:nth-child(7), td:nth-child(7)  /* Approved At column */ {
+        display: none;
+    }
+
     #print-header {
         display: block;
         text-align: center;
@@ -65,25 +84,22 @@ ob_end_flush(); // Flush output
         font-size: 16px;
     }
 
+    /* Hide interactive elements and unnecessary parts */
     #filter-form,
     #print-button,
-    .dataTables_filter, 
-    .dataTables_length, 
-    .dataTables_info, 
-    .dataTables_paginate,
+    .dataTables_filter, /* Search bar */
+    .dataTables_length, /* Entries dropdown */
+    .dataTables_info,   /* Showing entries info */
+    .dataTables_paginate, /* Pagination controls */
     .btn,
     input[type="checkbox"] {
         display: none !important;
     }
 
-    /* Hiding the checkbox column */
+
+    /* Hide the checkbox column */
     th:first-child, td:first-child {
         display: none;
-    }
-
-    /* Hiding the pagination slider */
-    .dataTables_paginate {
-        display: none !important;
     }
 
     /* Table styling for print */
@@ -102,7 +118,6 @@ ob_end_flush(); // Flush output
         background-color: #f2f2f2;
     }
 
-    /* Remove table row hover effect */
     tr:hover {
         background: none !important;
     }
@@ -139,116 +154,91 @@ ob_end_flush(); // Flush output
         <button type="button" class="btn btn-primary float-right" data-toggle="modal" data-target="#addDocumentModal">
     Add New Resolution
 </button>
-
+<br>
+<?php
+// Set the timezone to Asia/Manila
+date_default_timezone_set('Asia/Manila');
+?>
 <div id="print-header">
-<h3 style="font-family: 'Georgia, serif', Times, serif; font-size: 20px; font-weight: bold; text-align: center;">
-    Republic of Philippines
-</h3>
-<p>Province of Cagayan</p>
-<p>Municipality of Solana</p>
-    <img src="image/LOGO1.png" alt="Logo" style="width: 100px; height: auto;">
-    
-<strong>OFFICE OF THE SANGGUNIANG KABATAAN</strong>
+    <h2 style="font-family: 'Georgia, serif', Times, serif; font-size: 20px; font-weight: bold; text-align: center;"><strong>
+        Republic of Philippines
+        </strong>
+    </h2>
+    <h3>Province of Cagayan</h3>
+    <p>Municipality of Solana</p>
+    <br>
+    <img src="image/LOGO1.png" alt="Logo" style="width: 100px; height: auto; " >
+    <br><br>
+    <h3><strong>OFFICE OF THE SANGGUNIANG KABATAAN</strong></h3>
+    <br>
+    <p>Approved List of Resolution as of <strong><?php echo date('F d, Y H:i:s A'); ?></strong></p>
+</div>
+<form method="GET" action="resolution.php" id="filter-form">
+    <div class="form-group">
+        <label for="status_filter">Filter by Status:</label>
+        <select id="status_filter" name="status_filter" class="form-control" onchange="this.form.submit()">
+            <option value="">All</option>
+            <option value="Pending" <?php if ($statusFilter == "Pending") echo "selected"; ?>>Pending</option>
+            <option value="First Reading" <?php if ($statusFilter == "First Reading") echo "selected"; ?>>First Reading</option>
+            <option value="Second Reading" <?php if ($statusFilter == "Second Reading") echo "selected"; ?>>Second Reading</option>
+            <option value="In Committee" <?php if ($statusFilter == "In Committee") echo "selected"; ?>>In Committee</option>
+        </select>
+    </div>
+</form>
 </div>
 
-</div>
+
 <div class="card-body">
-     <!-- Status Filtering -->
-     <!-- Combined Status and Date Filtering Form -->
-     <!-- <form method="GET" id="filter-form" class="mb-3">
-    <div class="form-row">
-       
-        <div class="col-md-4">
-            <label for="status-filter">Filter by Status:</label>
-            <select name="status_filter" id="status-filter" class="form-control" style="width: 200px; display: inline-block;">
-                <option value="">All</option>
-                <option value="Pending" <?php if (isset($_GET['status_filter']) && $_GET['status_filter'] === 'Pending') echo 'selected'; ?>>Pending</option>
-                <option value="First Reading" <?php if (isset($_GET['status_filter']) && $_GET['status_filter'] === 'First Reading') echo 'selected'; ?>>First Reading</option>
-                <option value="Second Reading" <?php if (isset($_GET['status_filter']) && $_GET['status_filter'] === 'Second Reading') echo 'selected'; ?>>Second Reading</option>
-                <option value="In Committee" <?php if (isset($_GET['status_filter']) && $_GET['status_filter'] === 'In Committee') echo 'selected'; ?>>In Committee</option>
-            </select>
-          
-        </div>
-        <div class="col-md-3">
-            <button type="submit" class="btn btn-primary mt-0">Filter</button>
-        </div> -->
-        <!-- Date Filtering -->
-        <!-- <div class="col-md-4">
-            <label for="start-date">Filter by Date:</label>
-            <input type="date" name="start_date" id="start-date" class="form-control" style="width: 200px; display: inline-block;" 
-                value="<?php echo isset($_GET['start_date']) ? htmlspecialchars($_GET['start_date']) : ''; ?>">
-            <span>to</span>
-            <input type="date" name="end_date" id="end-date" class="form-control" style="width: 200px; display: inline-block;"
-                value="<?php echo isset($_GET['end_date']) ? htmlspecialchars($_GET['end_date']) : ''; ?>">
-        </div> -->
-        
-
-        <!-- Submit Button -->
-       
-        
         <div class="col-md-4"><button onclick="window.print();" class="btn btn-secondary" id="print-button">Print Report</button></div>
     <br>
-
-
 <form action="resolution.php" method="POST" id="archive-form" enctype="multipart/form-data">
-<div class="table-responsive">
 <table id="example1" class="table table-bordered table-striped">
-            <thead>
-                <tr>
-                    <th><input type="checkbox" id="select-all"></th>
-                    <th>Resolution No.</th>
-                    <th>Title</th>
-                    <th>Authored By</th>
-                    <th>Date Published</th>
-                    <th>Category</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                // Get selected status filter
-                $statusFilter = isset($_GET['status_filter']) ? $_GET['status_filter'] : '';
+    <thead>
+        <tr>
+            <th><input type="checkbox" id="select-all"></th>
+            <th>Resolution No.</th>
+            <th>Title</th>
+            <th>Authored By</th>
+            <th>Date Published</th>
+            <th>Category</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php
+        $sql .= " ORDER BY (d_status = 'Pending') DESC, `Date Published` DESC";
 
-                // Modify SQL query based on filter
-                $sql = "SELECT doc_no, Title, Author, `Date Published`, Category, d_status, id, file_path, resolution_no, approval_timestamp
-                        FROM documents 
-                        WHERE isArchive = 0 AND Category = 'Resolution'";
+        // Prepare and execute query
+        $stmt = $conn->prepare($sql);
+        if (!empty($statusFilter)) {
+            $stmt->bind_param("s", $statusFilter);
+        }
+        $stmt->execute();
+        $result = $stmt->get_result();
 
-                // Apply status filter if selected
-                if (!empty($statusFilter)) {
-                    $sql .= " AND d_status = ?";
+        if ($result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                // Skip rows where status is 'Approve' or 'Reject'
+                if ($row['d_status'] === 'Approve' || $row['d_status'] === 'Reject') {
+                    continue; // Skip this iteration (do not display this row)
                 }
+                echo "<tr>";
+                echo "<td><input type='checkbox' name='selected_documents[]' value='" . $row['id'] . "' class='doc-checkbox'></td>";
+                echo "<td><a href='document_info.php?id=" . urlencode($row["id"]) . "'>" . htmlspecialchars($row["resolution_no"]) . "</a></td>";
+                echo "<td>" . htmlspecialchars($row["Title"]) . "</td>";
+                echo "<td>" . htmlspecialchars($row["Author"]) . "</td>";
+                echo "<td>" . date('Y-m-d', strtotime($row["Date Published"])) . "</td>";
+                echo "<td>" . htmlspecialchars($row["Category"]) . "</td>";
+                echo "<td>" . htmlspecialchars($row['d_status']) . "</td>";
+                echo "</tr>";
+            }
+        } else {
+            echo "<tr><td colspan='7' class='text-center'>No documents found</td></tr>";
+        }
+        ?>
+    </tbody>
+</table>
 
-                $sql .= " ORDER BY (d_status = 'Pending') DESC, `Date Published` DESC";
-
-                // Prepare and execute query
-                $stmt = $conn->prepare($sql);
-                if (!empty($statusFilter)) {
-                    $stmt->bind_param("s", $statusFilter);
-                }
-                $stmt->execute();
-                $result = $stmt->get_result();
-
-                if ($result->num_rows > 0) {
-                    while ($row = $result->fetch_assoc()) {
-                        $isApproved = $row['d_status'] === 'Approved' ? 'disabled' : '';
-
-                        echo "<tr>";
-                        echo "<td><input type='checkbox' name='selected_documents[]' value='" . $row['id'] . "' class='doc-checkbox' $isApproved></td>";
-                        echo "<td><a href='document_info.php?id=" . urlencode($row["id"]) . "'>" . htmlspecialchars($row["resolution_no"]) . "</a></td>";
-                        echo "<td>" . htmlspecialchars($row["Title"]) . "</td>";
-                        echo "<td>" . htmlspecialchars($row["Author"]) . "</td>";
-                        echo "<td>" . date('Y-m-d', strtotime($row["Date Published"])) . "</td>";
-                        echo "<td>" . htmlspecialchars($row["Category"]) . "</td>";
-                        echo "<td>" . htmlspecialchars($row["d_status"]) . " - " . htmlspecialchars($row["approval_timestamp"]) . "</td>";
-                        echo "</tr>";
-                    }
-                } else {
-                    echo "<tr><td colspan='8' class='text-center'>No documents found</td></tr>";
-                }
-                ?>
-            </tbody>
-        </table>
 
 
     <button type="submit" class="btn btn-danger" id="archive-selected-btn" disabled>Archive Selected</button>
@@ -343,7 +333,7 @@ ob_end_flush(); // Flush output
                     <option value="First Reading">First Reading</option>
                     <option value="Second Reading">Second Reading</option>
                     <option value="In Committee">In Committee</option>
-                    <option value="Approved">Approved</option>
+                    <option value="Approve">Approved</option>
                 </select>
             </div>
             
@@ -368,7 +358,7 @@ function printTable() {
     
     // Add a print header and the cloned table to the new window
     newWindow.document.write('<html><head><title>Print Report</title>');
-}
+    newWindow.document.write('<style>/* Additional
 </script>
        
 <script>
@@ -418,14 +408,13 @@ document.querySelector("#addform .close").addEventListener("click", function() {
 <script src="assets/plugins/datatables-buttons/js/buttons.colVis.min.js"></script>
 <script>
 $(function () {
-  // Select/Deselect all checkboxes
+  // check box features 
   $('#select-all').click(function () {
-    // Only select non-disabled checkboxes
-    $('input[name="selected_documents[]"]:not(:disabled)').prop('checked', this.checked);
+    $('input[name="selected_documents[]"]').prop('checked', this.checked);
     toggleArchiveButton();
   });
 
-  // Enable/Disable the archive button based on selection
+  // archive enable and disabled button
   $('input[name="selected_documents[]"]').click(function () {
     toggleArchiveButton();
   });
@@ -443,14 +432,14 @@ $(function () {
     "responsive": true,
     "lengthChange": false,
     "autoWidth": false,
-    "order": [[4, 'desc']], // Sort by the 5th column (Date Published) in descending order by default
+    "order": [[4, 'desc']], 
     "columnDefs": [
       {
-        "targets": [4], // Column index for 'Date Published'
-        "type": "date", // Ensure the column is treated as a date for sorting
+        "targets": [4], 
+        "type": "date", 
         "render": function(data, type, row) {
-          // Ensure the data passed to DataTables is in sortable date format
-          return data; // Data is already in YYYY-MM-DD HH:MM:SS format
+          
+          return data; 
         }
       }
     ],

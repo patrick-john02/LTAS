@@ -60,6 +60,11 @@ if ($stmt) {
 }
 
 @media print {
+  /* Hide the columns: Approved on and Status */
+   /* Approved on column */
+     th:nth-child(7), td:nth-child(7)  /* Status column */ {
+        display: none;
+    }
     #print-header {
         display: block;
         text-align: center;
@@ -86,6 +91,9 @@ if ($stmt) {
     }
     th:first-child, td:first-child {
         display: table-cell !important;
+    }
+    th:nth-child(6), td:nth-child(6) {
+        display: none !important;
     }
     table {
         width: 100%;
@@ -136,18 +144,23 @@ if ($stmt) {
         <button type="button" class="btn btn-primary float-right" data-toggle="modal" data-target="#addDocumentModal">
     Add New Ordinance
 </button>
+<?php
+// Set the timezone to Asia/Manila
+date_default_timezone_set('Asia/Manila');
+?>
 <div id="print-header">
-<h3 style="font-family: 'Georgia, serif', Times, serif; font-size: 20px; font-weight: bold; text-align: center;">
-    Republic of Philippines
-</h3>
-<p>Province of Cagayan</p>
-<p>Municipality of Solana</p>
-    <img src="image/LOGO1.png" alt="Logo" style="width: 100px; height: auto;">
-    
-<strong>OFFICE OF THE SANGGUNIANG KABATAAN</strong>
-</div>
-
-<h3 class="card-title">Ordinance List</h3>
+    <h2 style="font-family: 'Georgia, serif', Times, serif; font-size: 20px; font-weight: bold; text-align: center;"><strong>
+        Republic of Philippines
+        </strong>
+    </h2>
+    <h3>Province of Cagayan</h3>
+    <p>Municipality of Solana</p>
+    <br>
+    <img src="image/LOGO1.png" alt="Logo" style="width: 100px; height: auto; " >
+    <br><br>
+    <h3><strong>OFFICE OF THE SANGGUNIANG KABATAAN</strong></h3>
+    <br>
+    <p>Approved List of Ordinance as of <strong><?php echo date('F d, Y H:i:s A'); ?></strong></p>
 </div>
 <div class="card-body">
 
@@ -167,9 +180,12 @@ if ($stmt) {
     </thead>
     <tbody>
         <?php
-        if ($result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                // Map the database status to the human-readable status
+       if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            // Skip rows where the document status is "Approved"
+            if ($row["d_status"] === 'Approve') {
+                continue;
+            }
                 $status = '';
                 switch ($row["d_status"]) {
                     case 'Pending':
@@ -184,6 +200,11 @@ if ($stmt) {
                     case 'In Committee':
                         $status = 'In Committee';
                         break;
+                    
+                    case 'Reject':
+                        $status = 'Rejected';
+                        break;
+
                     default:
                         $status = 'Unknown';
                         break;

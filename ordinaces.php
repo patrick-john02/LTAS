@@ -5,6 +5,19 @@ include('config.php');
 include('./includes/navbar.php');
 include('./includes/sidebar.php');
 
+// Get selected status filter
+$statusFilter = isset($_GET['status_filter']) ? $_GET['status_filter'] : '';
+
+// Modify SQL query based on filter
+$sql = "SELECT doc_no, Title, Author, `Date Published`, Category, d_status, id, file_path, ordinance_no, approval_timestamp
+FROM documents 
+WHERE isArchive = 0 AND Category = 'Ordinance'";
+
+if (!empty($statusFilter)) {
+$sql .= " AND d_status = ?";
+}
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_documents'])) {
     $selectedDocs = $_POST['selected_documents'];
     $placeholders = implode(',', array_fill(0, count($selectedDocs), '?'));
@@ -20,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_documents'])
         $_SESSION['message'] = "Failed to archive selected documents.";
     }
 
-    header("Location: ordinances.php");
+    header("Location: ordinaces.php");
     exit();
 }
 ob_end_flush(); // Flush output
@@ -34,25 +47,26 @@ ob_end_flush(); // Flush output
     <script src="assets/jquery-3.7.1.js"></script>
     <script src="assets/dataTables.js"></script>
     <link rel="stylesheet" href="assets/dataTables.dataTables.css">
-    <!-- Google Font: Source Sans Pro -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="assets/plugins/fontawesome-free/css/all.min.css">
-    <!-- Tempusdominus Bootstrap 4 -->
     <link rel="stylesheet" href="assets/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css">
-    <!-- Theme style -->
     <link rel="stylesheet" href="assets/dist/css/adminlte.min.css">
-    <!-- Custom Modal Styles -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
     <style>
-/* Hide print header by default */
+/* Hide the print header on screen */
 #print-header {
     display: none;
 }
 
 /* Print Styles */
 @media print {
+     /* Hide the columns: Category, Status, and Approved At */
+     th:nth-child(5), td:nth-child(5), /* Category column */
+    th:nth-child(6), td:nth-child(6), /* Status column */
+    th:nth-child(7), td:nth-child(7)  /* Approved At column */ {
+        display: none;
+    }
+
     #print-header {
         display: block;
         text-align: center;
@@ -64,37 +78,53 @@ ob_end_flush(); // Flush output
         height: auto;
     }
 
+    #print-header h3,
+    #print-header p {
+        margin: 0;
+        font-size: 16px;
+    }
+
+    /* Hide interactive elements and unnecessary parts */
+    #filter-form,
+    #print-button,
+    .dataTables_filter, /* Search bar */
+    .dataTables_length, /* Entries dropdown */
+    .dataTables_info,   /* Showing entries info */
+    .dataTables_paginate, /* Pagination controls */
+    .btn,
+    input[type="checkbox"] {
+        display: none !important;
+    }
+
+
+    /* Hide the checkbox column */
+    th:first-child, td:first-child {
+        display: none;
+    }
+
+    /* Table styling for print */
     table {
         width: 100%;
         border-collapse: collapse;
     }
 
     th, td {
-        border: 1px solid black;
         padding: 8px;
         text-align: left;
+        border: 1px solid #ddd;
     }
 
     th {
         background-color: #f2f2f2;
     }
 
-    /* Hide unnecessary elements */
-    #filter-form,
-    #print-button,
-    .dataTables_filter,
-    .dataTables_length,
-    .dataTables_paginate,
-    .btn {
-        display: none !important;
+    tr:hover {
+        background: none !important;
     }
 }
-
 </style>
 </head>
 <body class="hold-transition sidebar-mini">
-
-
 <div class="wrapper">
     <div class="content-wrapper">
         <div class="content-header">
@@ -120,60 +150,54 @@ ob_end_flush(); // Flush output
         <section class="content">
             <div class="container-fluid">
                 <div class="card">
-                <div class="card-header">
-                <button type="button" class="btn btn-primary float-right" data-toggle="modal" data-target="#addDocumentModal">
-    Add New Ordinance
+                    <div class="card-header">
+        <button type="button" class="btn btn-primary float-right" data-toggle="modal" data-target="#addDocumentModal">
+    Add New Ordinances
 </button>
-
-
-
+<br>
+<?php
+// Set the timezone to Asia/Manila
+date_default_timezone_set('Asia/Manila');
+?>
 <div id="print-header">
-<h3 style="font-family: 'Georgia, serif', Times, serif; font-size: 20px; font-weight: bold; text-align: center;">
-    Republic of Philippines
-</h3>
-<p>Province of Cagayan</p>
-<p>Municipality of Solana</p>
-    <img src="image/LOGO1.png" alt="Logo" style="width: 100px; height: auto;">
-    
-<strong>OFFICE OF THE SANGGUNIANG KABATAAN</strong>
-</div>
-</div>
-<div class="card-body">
-    <!-- Status Filtering -->
-     <!-- Combined Status and Date Filtering Form -->
-     <!-- <form method="GET" id="filter-form" class="mb-3">
-    <div class="form-row">
-        <div class="col-md-4">
-            <label for="status-filter">Filter by Status:</label>
-            <select name="status_filter" id="status-filter" class="form-control" style="width: 200px; display: inline-block;">
-                <option value="">All</option>
-                <option value="Pending" <?php if (isset($_GET['status_filter']) && $_GET['status_filter'] === 'Pending') echo 'selected'; ?>>Pending</option>
-                <option value="First Reading" <?php if (isset($_GET['status_filter']) && $_GET['status_filter'] === 'First Reading') echo 'selected'; ?>>First Reading</option>
-                <option value="Second Reading" <?php if (isset($_GET['status_filter']) && $_GET['status_filter'] === 'Second Reading') echo 'selected'; ?>>Second Reading</option>
-                <option value="In Committee" <?php if (isset($_GET['status_filter']) && $_GET['status_filter'] === 'In Committee') echo 'selected'; ?>>In Committee</option>
-            </select>
-            <div class="col-md-3">
-            <button type="submit" class="btn btn-primary mt-0">Filter</button>
-        </div>
-        </div> -->
-
- 
-
-
-
-    <div class="col-md-4">
-        <button onclick="window.print();" class="btn btn-secondary" id="print-button">Print Report</button>
-    </div>
+    <h2 style="font-family: 'Georgia, serif', Times, serif; font-size: 20px; font-weight: bold; text-align: center;"><strong>
+        Republic of Philippines
+        </strong>
+    </h2>
+    <h3>Province of Cagayan</h3>
+    <p>Municipality of Solana</p>
     <br>
-        
+    <img src="image/LOGO1.png" alt="Logo" style="width: 100px; height: auto; " >
+    <br><br>
+    <h3><strong>OFFICE OF THE SANGGUNIANG KABATAAN</strong></h3>
+    <br>
+    <p>Approved List of Ordinance as of <strong><?php echo date('F d, Y H:i:s A'); ?></strong></p>
+</div>
+<form method="GET" action="ordinaces.php" id="filter-form">
+    <div class="form-group">
+        <label for="status_filter">Filter by Status:</label>
+        <select id="status_filter" name="status_filter" class="form-control" onchange="this.form.submit()">
+            <option value="">All</option>
+            <option value="Pending" <?php if ($statusFilter == "Pending") echo "selected"; ?>>Pending</option>
+            <option value="First Reading" <?php if ($statusFilter == "First Reading") echo "selected"; ?>>First Reading</option>
+            <option value="Second Reading" <?php if ($statusFilter == "Second Reading") echo "selected"; ?>>Second Reading</option>
+            <option value="In Committee" <?php if ($statusFilter == "In Committee") echo "selected"; ?>>In Committee</option>
+        </select>
+    </div>
+</form>
+</div>
 
-    <form action="resolution.php" method="POST" id="archive-form" enctype="multipart/form-data">
-    <div class="table-responsive">  
-    <table id="example1" class="table table-bordered table-striped">
+
+<div class="card-body">
+        <div class="col-md-4"><button onclick="window.print();" class="btn btn-secondary" id="print-button">Print Report</button></div>
+    <br>
+
+<form action="ordinaces.php" method="POST" id="archive-form" enctype="multipart/form-data">
+<table id="example1" class="table table-bordered table-striped">
             <thead>
                 <tr>
                     <th><input type="checkbox" id="select-all"></th>
-                    <th>Resolution No.</th>
+                    <th>Ordinance No.</th>
                     <th>Title</th>
                     <th>Authored By</th>
                     <th>Date Published</th>
@@ -183,20 +207,8 @@ ob_end_flush(); // Flush output
             </thead>
             <tbody>
                 <?php
-                // Get selected status filter
-                $statusFilter = isset($_GET['status_filter']) ? $_GET['status_filter'] : '';
 
-                // Modify SQL query based on filter
-                $sql = "SELECT doc_no, Title, Author, `Date Published`, Category, d_status, id, file_path, ordinance_no, approval_timestamp
-                        FROM documents 
-                        WHERE isArchive = 0 AND Category = 'Ordinance'";
-
-                // Apply status filter if selected
-                if (!empty($statusFilter)) {
-                    $sql .= " AND d_status = ?";
-                }
-
-                $sql .= " ORDER BY (d_status = 'Pending') DESC, `Date Published` DESC";
+$sql .= " ORDER BY (d_status = 'Pending') DESC, `Date Published` DESC";
 
                 // Prepare and execute query
                 $stmt = $conn->prepare($sql);
@@ -208,16 +220,23 @@ ob_end_flush(); // Flush output
 
                 if ($result->num_rows > 0) {
                     while ($row = $result->fetch_assoc()) {
-                        $isApproved = $row['d_status'] === 'Approved' ? 'disabled' : '';
-
+                        // Skip rows where status is 'Approve' or 'Reject'
+                        if ($row['d_status'] === 'Approve' || $row['d_status'] === 'Reject') {
+                            continue; // Skip this iteration (do not display this row)
+                        }
+        
+                        // For non-approved rows, display the `approval_timestamp`
+                        $approvalTimestamp = $row['d_status'] === 'Approve' ? 'N/A' : $row['approval_timestamp'];
+        
                         echo "<tr>";
-                        echo "<td><input type='checkbox' name='selected_documents[]' value='" . $row['id'] . "' class='doc-checkbox' $isApproved></td>";
+                        echo "<td><input type='checkbox' name='selected_documents[]' value='" . $row['id'] . "' class='doc-checkbox'></td>";
                         echo "<td><a href='document_info.php?id=" . urlencode($row["id"]) . "'>" . htmlspecialchars($row["ordinance_no"]) . "</a></td>";
                         echo "<td>" . htmlspecialchars($row["Title"]) . "</td>";
                         echo "<td>" . htmlspecialchars($row["Author"]) . "</td>";
                         echo "<td>" . date('Y-m-d', strtotime($row["Date Published"])) . "</td>";
                         echo "<td>" . htmlspecialchars($row["Category"]) . "</td>";
-                        echo "<td>" . htmlspecialchars($row["d_status"]) . " - " . htmlspecialchars($row["approval_timestamp"]) . "</td>";
+                        // If status is not 'Approved', display the approval timestamp
+                        echo "<td>" . htmlspecialchars($row['d_status']) . "</td>";
                         echo "</tr>";
                     }
                 } else {
@@ -226,8 +245,11 @@ ob_end_flush(); // Flush output
                 ?>
             </tbody>
         </table>
-        <button type="submit" class="btn btn-danger" id="archive-selected-btn" disabled>Archive Selected</button>
-    </form>
+
+
+    <button type="submit" class="btn btn-danger" id="archive-selected-btn" disabled>Archive Selected</button>
+</form>
+
 </div>
     </div>
         </div>
@@ -246,35 +268,37 @@ ob_end_flush(); // Flush output
                 </button>
             </div>
             <div class="modal-body">
-                <form action="adddocuments.php" method="POST" enctype="multipart/form-data">
-                    <div class="form-group">
-                        <label for="title">Title:</label>
-                        <input type="text" class="form-control" id="title" name="title" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="description">Description:</label>
-                        <textarea class="form-control" id="description" name="description" required></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="author">Author:</label>
-                        <input type="text" class="form-control" id="author" name="author" required>
-                    </div>
-                     <!-- Automatically set the current date and time -->
+            <form action="adddocuments.php" method="POST" enctype="multipart/form-data">
+    <div class="form-group">
+        <label for="title">Title:</label>
+        <input type="text" class="form-control" id="title" name="title" required>
+    </div>
+    <div class="form-group">
+        <label for="description">Description:</label>
+        <textarea class="form-control" id="description" name="description" required></textarea>
+    </div>
+    <div class="form-group">
+        <label for="author">Author:</label>
+        <input type="text" class="form-control" id="author" name="author" required>
+    </div>
+
+    <!-- Automatically set the current date and time -->
     <input type="hidden" name="date_published" value="<?php echo date('Y-m-d H:i:s'); ?>">
 
-                        <!-- Automatically set category to 'Resolution' -->
+    <!-- Automatically set category to 'Ordinance' -->
     <input type="hidden" name="category" value="Ordinance">
 
-                    <div class="form-group">
-                        <label for="file_path">File: (valid file pdf, img, docx)</label>
-                        <input type="file" class="form-control" id="file_path" name="file_path" accept=".pdf, .docx, image/*" required>
-                    </div>
-                    <input type="hidden" name="user_id" value="1"> <!-- Set this dynamically based on the logged-in user -->
-                    <div class="modal-footer justify-content-between">
-                        <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Add Document</button>
-                    </div>
-                </form>
+    <div class="form-group">
+        <label for="file_path">File: (valid file pdf, img, docx)</label>
+        <input type="file" class="form-control" id="file_path" name="file_path" accept=".pdf, .docx, image/*" required>
+    </div>
+    <input type="hidden" name="user_id" value="1"> <!-- Set this dynamically based on the logged-in user -->
+    <div class="modal-footer justify-content-between">
+        <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-primary">Add Document</button>
+    </div>
+</form>
+
             </div>
         </div>
     </div>
@@ -315,7 +339,7 @@ ob_end_flush(); // Flush output
                     <option value="First Reading">First Reading</option>
                     <option value="Second Reading">Second Reading</option>
                     <option value="In Committee">In Committee</option>
-                    <option value="Approved">Approved</option>
+                    <option value="Approve">Approved</option>
                 </select>
             </div>
             
@@ -326,54 +350,35 @@ ob_end_flush(); // Flush output
             <button type="submit" name="submit" class="submit-button">Submit</button>
         </form>
     </div>
-</div>
-
+</div> 
 <script>
 function printTable() {
+    // Show the print header before printing
     document.getElementById('print-header').style.display = 'block';
 
-    var printHeader = document.getElementById('print-header').outerHTML;
-    var printTable = document.getElementById('example1').outerHTML;
-
-    var printWindow = window.open('', '', 'height=600,width=800');
-    printWindow.document.write('<html><head><title>Print Report</title>');
-    printWindow.document.write(`
-        <style>
-            body { font-family: Arial, sans-serif; }
-            table { width: 100%; border-collapse: collapse; }
-            th, td { border: 1px solid black; padding: 8px; text-align: left; }
-            th { background-color: #f2f2f2; }
-            img { width: 100px; height: auto; margin: 0 auto; display: block; }
-            h3, p { text-align: center; margin: 5px; }
-        </style>
-    `);
-    printWindow.document.write('</head><body>');
-    printWindow.document.write(printHeader); 
-    printWindow.document.write(printTable);  
-    printWindow.document.write('</body></html>');
-    printWindow.document.close();
-    printWindow.print();
-    document.getElementById('print-header').style.display = 'none';
+    // Create a clone of the table to print
+    var printContent = document.getElementById('example1').outerHTML;
+    
+    // Create a new window for printing
+    var newWindow = window.open('', '', 'height=500,width=800');
+    
+    // Add a print header and the cloned table to the new window
+    newWindow.document.write('<html><head><title>Print Report</title>');
 }
 </script>
-
+       
 <script>
-    // Show the Add Document form when the button is clicked
+    // Show the Add Document if the button is clicked
 document.getElementById("add-button").addEventListener("click", function() {
-    document.getElementById("addform").style.display = "flex";  // Ensure it's displayed as a flex container
+    document.getElementById("addform").style.display = "flex";  
 });
 
-// Close the Add Document form when the close button is clicked
 document.querySelector("#addform .close").addEventListener("click", function() {
     document.getElementById("addform").style.display = "none";
 });
 </script>
-    <!-- Include Toastr CSS -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
-
-<!-- Include Toastr JS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-
 <script src="assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="assets/plugins/chart.js/Chart.min.js"></script>
 <script src="assets/plugins/sparklines/sparkline.js"></script>
@@ -393,8 +398,7 @@ document.querySelector("#addform .close").addEventListener("click", function() {
 <script src="assets/dist/js/pages/dashboard3.js"></script>
 <script src="assets/dist/js/pages/dashboard.js"></script>
 <script src="assets/dist/js/adminlte.min.js"></script>
-
-<!--Data tables -->
+<!--Data tables imports -->
 <script src="assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="assets/plugins/datatables/jquery.dataTables.min.js"></script>
 <script src="assets/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
@@ -408,7 +412,6 @@ document.querySelector("#addform .close").addEventListener("click", function() {
 <script src="assets/plugins/datatables-buttons/js/buttons.html5.min.js"></script>
 <script src="assets/plugins/datatables-buttons/js/buttons.print.min.js"></script>
 <script src="assets/plugins/datatables-buttons/js/buttons.colVis.min.js"></script>
-
 <script>
 $(function () {
   // Select/Deselect all checkboxes

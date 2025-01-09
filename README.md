@@ -14,13 +14,12 @@ mobile responsive tables and buttons
 fixed the archived document issues 
 fixed the bug on checkboxes 
 
+january 01 , 2025
+all of the issues are done
+check if there are functions that i missed
 
-issues
-admin side 
-1. date filtering is not working to all pages (ongoing)
-2. mobile respoonsiveness is not working (done)
 
-status: admin testing
+status: full system testing
 
 --Ms. kheriz if some bug occur on the system please contact me okay -- 
 
