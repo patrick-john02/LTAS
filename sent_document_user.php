@@ -178,56 +178,55 @@ date_default_timezone_set('Asia/Manila');
     </thead>
     <tbody>
     <?php
-    if ($result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
-            // Skip rows where the document status is "Approved"
-            if ($row["d_status"] === 'Approve') {
-                continue;
-            }
-
-            $status = '';
-            switch ($row["d_status"]) {
-                case 'Pending':
-                    $status = 'Pending';
-                    break;
-                case 'First Reading':
-                    $status = 'First Reading';
-                    break;
-                case 'Second Reading':
-                    $status = 'Second Reading';
-                    break;
-                case 'In Committee':
-                    $status = 'In Committee';
-                    break;
-                default:
-                    $status = 'Unknown';
-                    break;
-            }
-
-            echo "<tr data-id='" . htmlspecialchars($row["id"]) . "'>";
-            echo "<td><a href='user_document_info.php?id=" . urlencode($row["id"]) . "'>" . htmlspecialchars($row["resolution_no"]) . "</a></td>";
-            echo "<td class='editable' data-column='Title'>" . htmlspecialchars($row["Title"]) . "</td>";
-            echo "<td class='editable' data-column='Author'>" . htmlspecialchars($row["Author"]) . "</td>";
-            echo "<td>" . date('Y-m-d', strtotime($row["Date Published"])) . "</td>";
-            echo "<td data-column='Status'>" . htmlspecialchars($status) . "</td>";
-
-            // Only show the Delete button if the document status is 'Pending'
-            if ($row["d_status"] === 'Pending') {
-                echo "<td><form action='delete_document.php' method='POST'>
-                    <input type='hidden' name='id' value='" . htmlspecialchars($row['id']) . "'>
-                    <button type='submit' class='btn btn-danger' onclick='return confirm(\"Are you sure you want to delete this document?\");'>Delete</button>
-                    </form></td>";
-            } else {
-                echo "<td></td>"; // No action button if the status is not 'Pending'
-            }
-
-            echo "</tr>";
+   if ($result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        // Skip rows where the document status is "Approve" or "Reject"
+        if ($row["d_status"] === 'Approve' || $row["d_status"] === 'Reject') {
+            continue;
         }
-    } else {
-        echo "<tr><td colspan='6' class='text-center'>No documents found</td></tr>";
+        $status = '';
+        switch ($row["d_status"]) {
+            case 'Pending':
+                $status = 'Pending';
+                break;
+            case 'First Reading':
+                $status = 'First Reading';
+                break;
+            case 'Second Reading':
+                $status = 'Second Reading';
+                break;
+            case 'In Committee':
+                $status = 'In Committee';
+                break;
+            default:
+                $status = 'Unknown';
+                break;
+        }
+
+        echo "<tr data-id='" . htmlspecialchars($row["id"]) . "'>";
+        echo "<td><a href='user_document_info.php?id=" . urlencode($row["id"]) . "'>" . htmlspecialchars($row["resolution_no"]) . "</a></td>";
+        echo "<td class='editable' data-column='Title'>" . htmlspecialchars($row["Title"]) . "</td>";
+        echo "<td class='editable' data-column='Author'>" . htmlspecialchars($row["Author"]) . "</td>";
+        echo "<td>" . date('Y-m-d', strtotime($row["Date Published"])) . "</td>";
+        echo "<td data-column='Status'>" . htmlspecialchars($status) . "</td>";
+
+        // Only show the Delete button if the document status is 'Pending'
+        if ($row["d_status"] === 'Pending') {
+            echo "<td><form action='delete_document.php' method='POST'>
+                <input type='hidden' name='id' value='" . htmlspecialchars($row['id']) . "'>
+                <button type='submit' class='btn btn-danger' onclick='return confirm(\"Are you sure you want to delete this document?\");'>Delete</button>
+                </form></td>";
+        } else {
+            echo "<td></td>"; // No action button if the status is not 'Pending'
+        }
+
+        echo "</tr>";
     }
-    ?>
-    </tbody>
+} else {
+    echo "<tr><td colspan='6' class='text-center'>No documents found</td></tr>";
+}
+?>
+</tbody>
 </table>
 
 </div>

@@ -182,8 +182,8 @@ date_default_timezone_set('Asia/Manila');
         <?php
        if ($result->num_rows > 0) {
         while ($row = $result->fetch_assoc()) {
-            // Skip rows where the document status is "Approved"
-            if ($row["d_status"] === 'Approve') {
+            // Skip rows where the document status is "Approve" or "Reject"
+            if ($row["d_status"] === 'Approve' || $row["d_status"] === 'Reject') {
                 continue;
             }
                 $status = '';

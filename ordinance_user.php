@@ -188,31 +188,31 @@ if ($start_date && $end_date) {
 <form method="GET" id="filter-form" class="mb-3">
     <div class="form-row align-items-center d-flex">
         <!-- Date Range Filter -->
-        <div class="col-md-3 mb-2 mb-md-0">
+        <div class="col-md-2 mb-2 mb-md-0">
             <input type="date" name="start_date" id="start-date" class="form-control" value="<?php echo htmlspecialchars($_GET['start_date'] ?? ''); ?>">
         </div>
-        <div class="col-md-3 mb-2 mb-md-0">
+        <div class="col-md-2 mb-2 mb-md-0">
             <input type="date" name="end_date" id="end-date" class="form-control" value="<?php echo htmlspecialchars($_GET['end_date'] ?? ''); ?>">
         </div>
 
         <!-- Filter Button -->
-        <div class="col-md-2 mb-2 mb-md-0">
+        <div class="col-md-1 mb-2 mb-md-0">
             <button type="submit" class="btn btn-primary w-100">Filter Date</button>
         </div>
 
         <!-- Reset Button -->
-        <div class="col-md-2 mb-2 mb-md-0">
-            <a href="ordinance_user.php" class="btn btn-warning w-100">Clear Filter</a>
+        <div class="col-md-1 mb-2 mb-md-0">
+            <a href="resolution_user.php" class="btn btn-warning w-100">Clear Filter</a>
         </div>
 
         <!-- Print Button -->
-        <div class="col-md-2 mb-2 mb-md-0">
+        <div class="col-md-1 mb-1 mb-md-0">
             <button onclick="window.print();" class="btn btn-secondary w-100" id="print-button">Print Report</button>
         </div>
     </div>
 </form>
 
-<div class="table-responsive">
+
     <table class="table table-bordered table-striped" id="resolutionTable">
         <thead>
             <tr>
@@ -304,10 +304,8 @@ if ($start_date && $end_date) {
     
 
     newWindow.document.write('<html><head><title>Print Report</title>');
-    newWindow.document.write('<style>/* Additional
 
 </script>
-    </script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 <script src="assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -403,29 +401,34 @@ $(function () {
       $('#archive-selected-btn').prop('disabled', true);
     }
   }
-  $("#example1").DataTable({
-    "responsive": true,
-    "lengthChange": false,
-    "autoWidth": false,
-    "order": [[4, 'desc']], 
-    "columnDefs": [
-      {
-        "targets": [4], 
-        "type": "date", 
-        "render": function(data, type, row) {
-          
-          return data; 
-        }
-      }
-    ],
-    "buttons": ["copy", "csv", "excel", "pdf", "print"]
-  }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
-  $('#example1_wrapper .dataTables_filter').css({
-    'float': 'right',
-    'text-align': 'right'
-  });
+  $("#resolutionTable").DataTable({
+        responsive: true,
+        lengthChange: false,
+        autoWidth: false,
+        order: [[3, 'desc']], // Sort by 'Approved on' column
+        columnDefs: [
+            {
+                targets: [3], // 'Approved on' column
+                type: "date",
+                render: function (data, type, row) {
+                    return data; // Return the date
+                }
+            }
+        ],
+        buttons: ["copy", "csv", "excel", "pdf", "print"]
+    }).buttons().container().appendTo('#resolutionTable_wrapper .col-md-6:eq(0)');
 
-  $('#example1_wrapper .dataTables_filter input').css('width', '300px');
+    // Customize DataTables search bar placement
+    $('#resolutionTable_wrapper .dataTables_filter').css({
+        'float': 'right',
+        'margin-top': '-50px', // Align with filters
+        'text-align': 'right'
+    });
+
+    $('#resolutionTable_wrapper .dataTables_filter input').css({
+        'width': '300px',
+        'margin-left': '5px'
+    });
 });
 </script>
 </body>
