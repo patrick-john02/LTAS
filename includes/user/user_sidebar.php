@@ -48,6 +48,13 @@
   </a>
 </li>
 
+<li class="nav-item">
+  <a href="user_archive_documents.php" class="nav-link">
+    <i class="fas fa-times-circle"></i>
+    <p>Archived Documents</p>
+  </a>
+</li>
+
 
           <!-- User Profile -->
            <li class="nav-item">

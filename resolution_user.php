@@ -213,34 +213,38 @@ if ($start_date && $end_date) {
 </form>
 
 
-    <table class="table table-bordered table-striped" id="resolutionTable">
-        <thead>
-            <tr>
-                <th>Resolution No.</th>
-                <th>Title</th>
-                <th>Authored By</th>
-                <th>Approved on</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php
-            if ($result->num_rows > 0) {
-                while ($row = $result->fetch_assoc()) {
-                    echo "<tr data-id='" . htmlspecialchars($row["id"]) . "'>";
-                    echo "<td><a href='user_document_info.php?id=" . urlencode($row["id"]) . "'>" . htmlspecialchars($row["resolution_no"]) . "</a></td>";
-                    echo "<td class='editable' data-column='Title'>" . htmlspecialchars($row["Title"]) . "</td>";
-                    echo "<td class='editable' data-column='Author'>" . htmlspecialchars($row["Author"]) . "</td>";
-                    echo "<td>" . date('F d, Y h:i:s A', strtotime($row["approval_timestamp"])) . "</td>";
-                    echo "<td data-column='Author'>" . htmlspecialchars($row["d_status"]) . "</td>";
-                    echo "</tr>";
-                }
-            } else {
-                echo "<tr><td colspan='5' class='text-center'>No documents found</td></tr>";
+<table class="table table-bordered table-striped" id="resolutionTable">
+    <thead>
+        <tr>
+            
+            <th>Resolution No.</th>
+            <th>Title</th>
+            <th>Authored By</th>
+            <th>Approved on</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php
+        if ($result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                echo "<tr data-id='" . htmlspecialchars($row["id"]) . "'>";
+                
+                echo "<td><a href='user_document_info.php?id=" . urlencode($row["id"]) . "'>" . htmlspecialchars($row["resolution_no"]) . "</a></td>";
+                echo "<td class='editable' data-column='Title'>" . htmlspecialchars($row["Title"]) . "</td>";
+                echo "<td class='editable' data-column='Author'>" . htmlspecialchars($row["Author"]) . "</td>";
+                echo "<td>" . date('F d, Y h:i:s A', strtotime($row["approval_timestamp"])) . "</td>";
+                echo "<td>" . htmlspecialchars($row["d_status"]) . "</td>";
+                echo "</tr>";
             }
-            ?>
-        </tbody>
-    </table>
+        } else {
+            echo "<tr><td colspan='6' class='text-center'>No documents found</td></tr>";
+        }
+        ?>
+    </tbody>
+</table>
+<button type="submit" class="btn btn-danger" id="archive-selected-btn" disabled>Archive Selected</button>
+
 
         </div>
     </div>
