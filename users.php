@@ -170,13 +170,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 echo "<form action='update_user_status.php' method='POST' style='display:inline' id='frm-$uid'>";
                 echo "<input type='hidden' name='id' value='" . $uid . "'>";
                 echo "<input type='hidden' name='new_status' value='Active'>"; // To change to Active
-                echo "<input type='submit' class='btn btn-sm btn-success' value='Activate' onclick='return confirm(\"Are you sure you want to activate this user?\")'>";
+                echo "<input type='submit' class='btn btn-sm btn-danger' value='Inactive' onclick='return confirm(\"Are you sure you want to activate this user?\")'>";
                 echo "</form>";
             } else {
                 echo "<form action='update_user_status.php' method='POST' style='display:inline' id='frm-$uid'>";
                 echo "<input type='hidden' name='id' value='" . $uid . "'>";
                 echo "<input type='hidden' name='new_status' value='Inactive'>"; // To change to Inactive
-                echo "<input type='submit' class='btn btn-sm btn-danger' value='inactive' onclick='return confirm(\"Are you sure you want to deactivate this user?\")'>";
+                echo "<input type='submit' class='btn btn-sm btn-success' value='Active' onclick='return confirm(\"Are you sure you want to deactivate this user?\")'>";
                 echo "</form>";
             }
             

@@ -221,25 +221,25 @@ if ($start_date && $end_date) {
 <form method="GET" id="filter-form" class="mb-3">
     <div class="form-row align-items-center d-flex">
         <!-- Date Range Filter -->
-        <div class="col-md-3 mb-2 mb-md-0">
+        <div class="col-md-2 mb-2 mb-md-0">
             <input type="date" name="start_date" id="start-date" class="form-control" value="<?php echo htmlspecialchars($_GET['start_date'] ?? ''); ?>">
         </div>
-        <div class="col-md-3 mb-2 mb-md-0">
+        <div class="col-md-2 mb-2 mb-md-0">
             <input type="date" name="end_date" id="end-date" class="form-control" value="<?php echo htmlspecialchars($_GET['end_date'] ?? ''); ?>">
         </div>
 
         <!-- Filter Button -->
-        <div class="col-md-2 mb-2 mb-md-0">
+        <div class="col-md-1 mb-2 mb-md-0">
             <button type="submit" class="btn btn-primary w-100">Filter Date</button>
         </div>
 
         <!-- Reset Button -->
-        <div class="col-md-2 mb-2 mb-md-0">
-            <a href="approved_documents.php" class="btn btn-warning w-100">Clear Filter</a>
+        <div class="col-md-1 mb-2 mb-md-0">
+            <a href="Approved_documents.php" class="btn btn-warning w-100">Clear Filter</a>
         </div>
 
         <!-- Print Button -->
-        <div class="col-md-2 mb-2 mb-md-0">
+        <div class="col-md-1 mb-1 mb-md-0">
             <button onclick="window.print();" class="btn btn-secondary w-100" id="print-button">Print Report</button>
         </div>
     </div>
@@ -247,50 +247,49 @@ if ($start_date && $end_date) {
 
 
 
+
     <!-- Table Form -->
     <form action="approved_documents.php" method="POST" id="archive-form" enctype="multipart/form-data">
-        <table id="example1" class="table table-bordered table-striped">
-            <thead>
-                <tr>
-                <th><input type="checkbox" id="select-all"></th>
-                    <th>Resolution No</th>
-                    <th>Title</th>
-                    <th>Author</th>
-                    <th>Category</th>
-                    <th>Status</th>
-                    <th>Approved at</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                if ($result->num_rows > 0) {
-                    while ($row = $result->fetch_assoc()) {
-                        echo "<tr>";
-                        echo "<tr>";
-                        echo "<td><input type='checkbox' name='selected_documents[]' value='" . $row['id'] . "' class='doc-checkbox'></td>";
+  <table class="table table-bordered table-striped" id="resolutionTable">
+    <thead>
+      <tr>
+        <th><input type="checkbox" id="select-all"></th>
+        <th>Document No.</th>
+        <th>Title</th>
+        <th>Author</th>
+        <th>Category</th>
+        <th>Status</th>
+        <th>Approved at</th>
+      </tr>
+    </thead>
+    <tbody>
+      <?php
+      if ($result->num_rows > 0) {
+          while ($row = $result->fetch_assoc()) {
+              echo "<tr>";
+              echo "<td><input type='checkbox' name='selected_documents[]' value='" . $row['id'] . "' class='doc-checkbox'></td>";
 
-                        $docNumber = '';
-                        if ($row["Category"] == 'Resolution' && !empty($row["resolution_no"])) {
-                            $docNumber = htmlspecialchars($row["resolution_no"]);
-                        } elseif ($row["Category"] == 'Ordinance' && !empty($row["ordinance_no"])) {
-                            $docNumber = htmlspecialchars($row["ordinance_no"]);
-                        }
+              $docNumber = '';
+              if ($row["Category"] == 'Resolution' && !empty($row["resolution_no"])) {
+                  $docNumber = htmlspecialchars($row["resolution_no"]);
+              } elseif ($row["Category"] == 'Ordinance' && !empty($row["ordinance_no"])) {
+                  $docNumber = htmlspecialchars($row["ordinance_no"]);
+              }
 
-                        echo "<td><a href='document_info.php?id=" . urlencode($row["id"]) . "'>" . $docNumber . "</a></td>";
-                        echo "<td>" . htmlspecialchars($row["Title"]) . "</td>";
-                        echo "<td>" . htmlspecialchars($row["Author"]) . "</td>";
-                        echo "<td>" . htmlspecialchars($row["Category"]) . "</td>";
-                        echo "<td>" . htmlspecialchars($row["d_status"]) . "</td>";
-                        echo "<td>" . ($row['approval_timestamp'] ? date('F d, Y H:i:s A', strtotime($row['approval_timestamp'])) : 'Not Approved Yet') . "</td>";
-                        echo "</tr>";
-                    }
-                } else {
-                    echo "<tr><td colspan='7' class='text-center'>No approved documents found</td></tr>";
-                }
-                ?>
-            </tbody>
-        </table>
-
+              echo "<td><a href='document_info.php?id=" . urlencode($row["id"]) . "'>" . $docNumber . "</a></td>";
+              echo "<td>" . htmlspecialchars($row["Title"]) . "</td>";
+              echo "<td>" . htmlspecialchars($row["Author"]) . "</td>";
+              echo "<td>" . htmlspecialchars($row["Category"]) . "</td>";
+              echo "<td>" . htmlspecialchars($row["d_status"]) . "</td>";
+              echo "<td>" . ($row['approval_timestamp'] ? date('F d, Y H:i:s A', strtotime($row['approval_timestamp'])) : 'Not Approved Yet') . "</td>";
+              echo "</tr>";
+          }
+      } else {
+          echo "<tr><td colspan='7' class='text-center'>No approved documents found</td></tr>";
+      }
+      ?>
+    </tbody>
+  </table>
 
 
     <button type="submit" class="btn btn-danger" id="archive-selected-btn" disabled>Archive Selected</button>
@@ -412,11 +411,10 @@ function printTable() {
     
     // Add a print header and the cloned table to the new window
     newWindow.document.write('<html><head><title>Print Report</title>');
-    newWindow.document.write('<style>/* Additional
 </script>
        
 <script>
-    // Show the Add Document if the button is clicked
+  
 document.getElementById("add-button").addEventListener("click", function() {
     document.getElementById("addform").style.display = "flex";  
 });
@@ -425,6 +423,7 @@ document.querySelector("#addform .close").addEventListener("click", function() {
     document.getElementById("addform").style.display = "none";
 });
 </script>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 <script src="assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -482,29 +481,34 @@ $(function () {
     }
   }
 
-  $("#example1").DataTable({
-    "responsive": true,
-    "lengthChange": false,
-    "autoWidth": false,
-    "order": [[4, 'desc']], 
-    "columnDefs": [
-      {
-        "targets": [4], 
-        "type": "date", 
-        "render": function(data, type, row) {
-          
-          return data; 
-        }
-      }
-    ],
-    "buttons": ["copy", "csv", "excel"]
-  }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
-  $('#example1_wrapper .dataTables_filter').css({
-    'float': 'right',
-    'text-align': 'right'
-  });
+  $("#resolutionTable").DataTable({
+        responsive: true,
+        lengthChange: false,
+        autoWidth: false,
+        order: [[3, 'desc']], // Sort by 'Approved at' column
+        columnDefs: [
+            {
+                targets: [3], // 'Approved at' column
+                type: "date",
+                render: function (data, type, row) {
+                    return data; // Return the date as it is
+                }
+            }
+        ],
+        buttons: ["copy", "csv", "excel", "pdf", "print"]
+    }).buttons().container().appendTo('#resolutionTable_wrapper .col-md-6:eq(0)');
 
-  $('#example1_wrapper .dataTables_filter input').css('width', '300px');
+    // Customize DataTables search bar placement
+    $('#resolutionTable_wrapper .dataTables_filter').css({
+        'float': 'right',
+        'margin-top': '-50px', // Align with filters
+        'text-align': 'right'
+    });
+
+    $('#resolutionTable_wrapper .dataTables_filter input').css({
+        'width': '300px',
+        'margin-left': '5px'
+    });
 });
 </script>
 </body>

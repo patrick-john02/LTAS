@@ -15,7 +15,7 @@ $startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '';
 $endDate = isset($_GET['end_date']) ? $_GET['end_date'] : '';
 
 // query para sa mga approved resolutions
-$sql = "SELECT * FROM documents WHERE user_id = ? AND Category = 'Ordinance' AND d_status = 'Approve'";
+$sql = "SELECT * FROM documents WHERE user_id = ? AND Category = 'Resolution' AND d_status = 'Reject'";
 $params = [$uid];
 $types = "i";
 
@@ -47,7 +47,7 @@ if ($stmt) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ordinance Lists</title>
+    <title>Resolution Lists</title>
     <script src="assets/jquery-3.7.1.js"></script>
     <script src="assets/dataTables.js"></script>
     <link rel="stylesheet" href="assets/dataTables.dataTables.css">
@@ -128,17 +128,17 @@ if ($stmt) {
             <div class="container-fluid">
                 <div class="row mb-2">
                     <div class="col-sm-6">
-                    <h1 class="m-0">Ordinance List</h1>
+                    <h1 class="m-0">Resolutions List</h1>
                         <?php if (isset($_GET['success']) && $_GET['success'] == 1): ?>
                             <div class="alert alert-success" role="alert">
-                                Ordinance successfully added!
+                                Resolution successfully added!
                             </div>
                         <?php endif; ?>
                     </div>
                     <div class="col-sm-6">
                         <ol class="breadcrumb float-sm-right">
                             <li class="breadcrumb-item"><a href="admin_dashboard.php">Home</a></li>
-                            <li class="breadcrumb-item active">Ordinances</li>
+                            <li class="breadcrumb-item active">Resolutions</li>
                         </ol>
                     </div>
                 </div>
@@ -149,7 +149,7 @@ if ($stmt) {
                 <div class="card">
                     <div class="card-header">
         <!-- <button type="button" class="btn btn-primary float-right" data-toggle="modal" data-target="#addDocumentModal">
-    Add New Ordinance
+    Add New Resolution
 </button> -->
 <?php
 // Set the timezone to Asia/Manila
@@ -161,13 +161,13 @@ $end_date = isset($_GET['end_date']) ? date('F d, Y', strtotime($_GET['end_date'
 
 // Determine the display date based on the filter
 if ($start_date && $end_date) {
-    $display_date = "Approved List as of Ordinances $start_date to $end_date";
+    $display_date = "Rejected List as of  $start_date to $end_date";
 } elseif ($start_date) {
-    $display_date = "Approved List as of Ordinances $start_date";
+    $display_date = "Rejected List as of  $start_date";
 } elseif ($end_date) {
-    $display_date = "Approved List as of Ordinances up to $end_date";
+    $display_date = "Rejected List as of  $end_date";
 } else {
-    $display_date = "Approved List as of Ordinances " . date('F d, Y');
+    $display_date = "Rejected List as of  " . date('F d, Y');
 }
 ?>
 <div id="print-header">
@@ -216,10 +216,10 @@ if ($start_date && $end_date) {
     <table class="table table-bordered table-striped" id="resolutionTable">
         <thead>
             <tr>
-                <th>Ordinance No.</th>
+                <th>Resolution No.</th>
                 <th>Title</th>
                 <th>Authored By</th>
-                <th>Approved on</th>
+                <th>Rejected on</th>
                 <th>Status</th>
             </tr>
         </thead>
@@ -228,7 +228,7 @@ if ($start_date && $end_date) {
             if ($result->num_rows > 0) {
                 while ($row = $result->fetch_assoc()) {
                     echo "<tr data-id='" . htmlspecialchars($row["id"]) . "'>";
-                    echo "<td><a href='user_document_info.php?id=" . urlencode($row["id"]) . "'>" . htmlspecialchars($row["ordinance_no"]) . "</a></td>";
+                    echo "<td><a href='user_document_info.php?id=" . urlencode($row["id"]) . "'>" . htmlspecialchars($row["resolution_no"]) . "</a></td>";
                     echo "<td class='editable' data-column='Title'>" . htmlspecialchars($row["Title"]) . "</td>";
                     echo "<td class='editable' data-column='Author'>" . htmlspecialchars($row["Author"]) . "</td>";
                     echo "<td>" . date('F d, Y h:i:s A', strtotime($row["approval_timestamp"])) . "</td>";
@@ -249,7 +249,7 @@ if ($start_date && $end_date) {
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addDocumentModalLabel">Add New Ordinance</h5>
+                <h5 class="modal-title" id="addDocumentModalLabel">Add New Resolution</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -267,7 +267,7 @@ if ($start_date && $end_date) {
                     </div>
 
                     <!-- Hidden fields for automated category and date -->
-                    <input type="hidden" name="category" value="Ordinance">
+                    <input type="hidden" name="category" value="Resolution">
                     <input type="hidden" name="date_published" id="date_published">
 
                     <div class="form-group">
@@ -277,7 +277,7 @@ if ($start_date && $end_date) {
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Add Ordinance</button>
+                    <button type="submit" class="btn btn-primary">Add Resolution</button>
                 </div>
             </form>
         </div>

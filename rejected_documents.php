@@ -34,7 +34,7 @@ $startDate = isset($_GET['start_date']) ? $_GET['start_date'] . ' 00:00:00' : ''
 $endDate = isset($_GET['end_date']) ? $_GET['end_date'] . ' 23:59:59' : '';
 
 $sql = "SELECT doc_no, Title, Author, `Date Published`, Category, d_status, id, file_path, resolution_no, ordinance_no,
-    (SELECT timestamp FROM document_timeline WHERE document_id = documents.id AND action = 'Reject' ORDER BY timestamp DESC LIMIT 1) AS timeline_approval_timestamp, approval_timestamp
+    (SELECT timestamp FROM document_timeline WHERE document_id = documents.id AND action = 'Reject' ORDER BY timestamp DESC LIMIT 1) AS rejection_timestamp
     FROM documents 
     WHERE isArchive = 0 AND Category IN ('Resolution', 'Ordinance') AND d_status = 'Reject'";
 
@@ -43,14 +43,14 @@ $params = [];
 $types = '';
 
 if (!empty($startDate) && !empty($endDate)) {
-    $sql .= " AND approval_timestamp BETWEEN ? AND ?";
+    $sql .= " AND rejection_timestamp BETWEEN ? AND ?";
     $params[] = $startDate;
     $params[] = $endDate;
     $types .= 'ss';
 }
 
-// Order results by approval_timestamp descending
-$sql .= " ORDER BY approval_timestamp DESC";
+// Order results by rejection_timestamp descending
+$sql .= " ORDER BY rejection_timestamp DESC";
 
 // Prepare and execute the query
 $stmt = $conn->prepare($sql);
@@ -219,76 +219,74 @@ if ($start_date && $end_date) {
 <form method="GET" id="filter-form" class="mb-3">
     <div class="form-row align-items-center d-flex">
         <!-- Date Range Filter -->
-        <div class="col-md-3 mb-2 mb-md-0">
+        <div class="col-md-2 mb-2 mb-md-0">
             <input type="date" name="start_date" id="start-date" class="form-control" value="<?php echo htmlspecialchars($_GET['start_date'] ?? ''); ?>">
         </div>
-        <div class="col-md-3 mb-2 mb-md-0">
+        <div class="col-md-2 mb-2 mb-md-0">
             <input type="date" name="end_date" id="end-date" class="form-control" value="<?php echo htmlspecialchars($_GET['end_date'] ?? ''); ?>">
         </div>
 
         <!-- Filter Button -->
-        <div class="col-md-2 mb-2 mb-md-0">
+        <div class="col-md-1 mb-2 mb-md-0">
             <button type="submit" class="btn btn-primary w-100">Filter Date</button>
         </div>
 
         <!-- Reset Button -->
-        <div class="col-md-2 mb-2 mb-md-0">
-            <a href="Rejected_documents.php" class="btn btn-warning w-100">Reset Filter</a>
+        <div class="col-md-1 mb-2 mb-md-0">
+            <a href="Approved_documents.php" class="btn btn-warning w-100">Clear Filter</a>
         </div>
 
         <!-- Print Button -->
-        <div class="col-md-2 mb-2 mb-md-0">
+        <div class="col-md-1 mb-1 mb-md-0">
             <button onclick="window.print();" class="btn btn-secondary w-100" id="print-button">Print Report</button>
         </div>
     </div>
 </form>
 
 
-
     <!-- Table Form -->
     <form action="Rejected_documents.php" method="POST" id="archive-form" enctype="multipart/form-data">
-        <table id="example1" class="table table-bordered table-striped">
-            <thead>
-                <tr>
-                    <th>Select</th>
-                    <th>Resolution No</th>
-                    <th>Title</th>
-                    <th>Author</th>
-                    <th>Category</th>
-                    <th>Status</th>
-                    <!-- <th>Approved at</th> -->
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                if ($result->num_rows > 0) {
-                    while ($row = $result->fetch_assoc()) {
-                        echo "<tr>";
-                        echo "<td><input type='checkbox' name='selected_documents[]' value='" . $row['id'] . "' class='doc-checkbox'></td>";
+  <table class="table table-bordered table-striped" id="resolutionTable">
+    <thead>
+      <tr>
+        <th><input type="checkbox" id="select-all"></th>
+        <th>Document No.</th>
+        <th>Title</th>
+        <th>Author</th>
+        <th>Category</th>
+        <th>Status</th>
+        <th>Rejected At</th>
+      </tr>
+    </thead>
+    <tbody>
+      <?php
+      if ($result->num_rows > 0) {
+          while ($row = $result->fetch_assoc()) {
+              echo "<tr>";
+              echo "<td><input type='checkbox' name='selected_documents[]' value='" . $row['id'] . "' class='doc-checkbox'></td>";
 
-                        $docNumber = '';
-                        if ($row["Category"] == 'Resolution' && !empty($row["resolution_no"])) {
-                            $docNumber = htmlspecialchars($row["resolution_no"]);
-                        } elseif ($row["Category"] == 'Ordinance' && !empty($row["ordinance_no"])) {
-                            $docNumber = htmlspecialchars($row["ordinance_no"]);
-                        }
+              $docNumber = '';
+              if ($row["Category"] == 'Resolution' && !empty($row["resolution_no"])) {
+                  $docNumber = htmlspecialchars($row["resolution_no"]);
+              } elseif ($row["Category"] == 'Ordinance' && !empty($row["ordinance_no"])) {
+                  $docNumber = htmlspecialchars($row["ordinance_no"]);
+              }
 
-                        echo "<td><a href='document_info.php?id=" . urlencode($row["id"]) . "'>" . $docNumber . "</a></td>";
-                        echo "<td>" . htmlspecialchars($row["Title"]) . "</td>";
-                        echo "<td>" . htmlspecialchars($row["Author"]) . "</td>";
-                        echo "<td>" . htmlspecialchars($row["Category"]) . "</td>";
-                        echo "<td>" . htmlspecialchars($row["d_status"]) . "</td>";
-                        echo "<td>" . ($row['approval_timestamp'] ? date('F d, Y H:i:s A', strtotime($row['approval_timestamp'])) : 'Not Rejected Yet') . "</td>";
-                        echo "</tr>";
-                    }
-                } else {
-                    echo "<tr><td colspan='7' class='text-center'>No Rejected documents found</td></tr>";
-                }
-                ?>
-            </tbody>
-        </table>
+              echo "<td><a href='document_info.php?id=" . urlencode($row["id"]) . "'>" . $docNumber . "</a></td>";
+              echo "<td>" . htmlspecialchars($row["Title"]) . "</td>";
+              echo "<td>" . htmlspecialchars($row["Author"]) . "</td>";
+              echo "<td>" . htmlspecialchars($row["Category"]) . "</td>";
+              echo "<td>" . htmlspecialchars($row["d_status"]) . "</td>";
+              echo "<td>" . ($row['rejection_timestamp'] ? date('F d, Y H:i:s A', strtotime($row['rejection_timestamp'])) : 'Not Rejected Yet') . "</td>";
 
-
+              echo "</tr>";
+          }
+      } else {
+          echo "<tr><td colspan='7' class='text-center'>No Rejected documents found</td></tr>";
+      }
+      ?>
+    </tbody>
+  </table>
 
     <button type="submit" class="btn btn-danger" id="archive-selected-btn" disabled>Archive Selected</button>
 </form>
@@ -299,9 +297,6 @@ if ($start_date && $end_date) {
             </section>
                     </div>
                         </div>
-
-
-                        
 
 <div class="modal fade" id="addDocumentModal" tabindex="-1" role="dialog" aria-labelledby="addDocumentModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -409,7 +404,6 @@ function printTable() {
     
     // Add a print header and the cloned table to the new window
     newWindow.document.write('<html><head><title>Print Report</title>');
-    newWindow.document.write('<style>/* Additional
 </script>
        
 <script>

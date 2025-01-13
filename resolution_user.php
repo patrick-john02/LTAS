@@ -128,7 +128,7 @@ if ($stmt) {
             <div class="container-fluid">
                 <div class="row mb-2">
                     <div class="col-sm-6">
-                    <h1 class="m-0">Dashboard</h1>
+                    <h1 class="m-0">Resolutions List</h1>
                         <?php if (isset($_GET['success']) && $_GET['success'] == 1): ?>
                             <div class="alert alert-success" role="alert">
                                 Resolution successfully added!

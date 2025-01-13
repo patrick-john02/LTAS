@@ -41,6 +41,13 @@
               <p>Sent Ordinance</p>
             </a>
           </li>
+          <li class="nav-item">
+  <a href="rejected_user_document.php" class="nav-link">
+    <i class="fas fa-times-circle"></i>
+    <p>Rejected Documents</p>
+  </a>
+</li>
+
 
           <!-- User Profile -->
            <li class="nav-item">
