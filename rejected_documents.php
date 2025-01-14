@@ -5,7 +5,6 @@ include('config.php');
 include('./includes/navbar.php');
 include('./includes/sidebar.php');
 
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_documents'])) {
     $selectedDocs = $_POST['selected_documents'];
     $placeholders = implode(',', array_fill(0, count($selectedDocs), '?'));
@@ -33,17 +32,20 @@ $currentDate = new DateTime();
 $startDate = isset($_GET['start_date']) ? $_GET['start_date'] . ' 00:00:00' : '';
 $endDate = isset($_GET['end_date']) ? $_GET['end_date'] . ' 23:59:59' : '';
 
-$sql = "SELECT doc_no, Title, Author, `Date Published`, Category, d_status, id, file_path, resolution_no, ordinance_no,
-    (SELECT timestamp FROM document_timeline WHERE document_id = documents.id AND action = 'Reject' ORDER BY timestamp DESC LIMIT 1) AS rejection_timestamp
-    FROM documents 
-    WHERE isArchive = 0 AND Category IN ('Resolution', 'Ordinance') AND d_status = 'Reject'";
+$sql = "SELECT d.doc_no, d.Title, d.Author, d.`Date Published`, d.Category, d.d_status, d.id, d.file_path, d.resolution_no, d.ordinance_no,
+        (SELECT dt.timestamp 
+         FROM document_timeline dt 
+         WHERE dt.document_id = d.id AND dt.action = 'Reject' 
+         ORDER BY dt.timestamp DESC LIMIT 1) AS rejection_timestamp
+        FROM documents d
+        WHERE d.isArchive = 0 AND d.Category IN ('Resolution', 'Ordinance') AND d.d_status = 'Reject'";
 
 // Add date filter condition if both start and end dates are provided
 $params = [];
 $types = '';
 
 if (!empty($startDate) && !empty($endDate)) {
-    $sql .= " AND rejection_timestamp BETWEEN ? AND ?";
+    $sql .= " HAVING rejection_timestamp BETWEEN ? AND ?";
     $params[] = $startDate;
     $params[] = $endDate;
     $types .= 'ss';
@@ -62,6 +64,7 @@ if (!empty($params)) {
 $stmt->execute();
 $result = $stmt->get_result();
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -77,54 +80,26 @@ $result = $stmt->get_result();
     <link rel="stylesheet" href="assets/dist/css/adminlte.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-/* Hide the print header on screen */
-#print-header {
-    display: none;
+#print-header,
+#print-footer,
+#row-count,
+#print-date {
+    display: none; 
 }
 
-/* Print Styles */
 @media print {
-     th:nth-child(5), td:nth-child(5), /* Category column */
-    th:nth-child(6), td:nth-child(6), /* Status column */
-    th:nth-child(7), td:nth-child(7)  /* Rejected At column */ {
-        display: none;
-    }
-
-    #print-header {
+    
+    #print-header,
+    #print-footer {
         display: block;
-        text-align: center;
-        margin-bottom: 20px;
     }
 
-    #print-header img {
-        width: 100px;
-        height: auto;
+    
+    #row-count,
+    #print-date {
+        display: block;
     }
 
-    #print-header h3,
-    #print-header p {
-        margin: 0;
-        font-size: 16px;
-    }
-
-    /* Hide interactive elements and unnecessary parts */
-    #filter-form,
-    #print-button,
-    .dataTables_filter, /* Search bar */
-    .dataTables_length, /* Entries dropdown */
-    .dataTables_info,   /* Showing entries info */
-    .dataTables_paginate, /* Pagination controls */
-    .btn,
-    input[type="checkbox"] {
-        display: none !important;
-    }
-
-    /* Hide the checkbox column */
-    th:first-child, td:first-child {
-        display: none;
-    }
-
-    /* Table styling for print */
     table {
         width: 100%;
         border-collapse: collapse;
@@ -140,14 +115,23 @@ $result = $stmt->get_result();
         background-color: #f2f2f2;
     }
 
-    /* Remove table row hover effect */
-    tr:hover {
-        background: none !important;
+    #filter-form,
+    #print-button,
+    .dataTables_filter,
+    .dataTables_length,
+    .dataTables_info,
+    .dataTables_paginate,
+    .btn,
+    input[type="checkbox"] {
+        display: none !important;
+    }
+
+    /* Hide the checkbox column */
+    th:first-child,
+    td:first-child {
+        display: none !important;
     }
 }
-
-
-
 </style>
 </head>
 <body class="hold-transition sidebar-mini">
@@ -198,6 +182,7 @@ if ($start_date && $end_date) {
     $display_date = "Approved List as of " . date('F d, Y');
 }
 ?>
+<center>
 <div id="print-header">
     <h2 style="font-family: 'Georgia, serif', Times, serif; font-size: 20px; font-weight: bold; text-align: center;"><strong>
         Republic of Philippines
@@ -211,6 +196,7 @@ if ($start_date && $end_date) {
     <br>
     <p><strong><?php echo $display_date; ?></strong></p>
 </div>
+</center>
 
 
 <h3 class="card-title">Rejected Documents</h3>
@@ -233,7 +219,7 @@ if ($start_date && $end_date) {
 
         <!-- Reset Button -->
         <div class="col-md-1 mb-2 mb-md-0">
-            <a href="Approved_documents.php" class="btn btn-warning w-100">Clear Filter</a>
+            <a href="rejected_documents.php" class="btn btn-warning w-100">Clear Filter</a>
         </div>
 
         <!-- Print Button -->
@@ -290,6 +276,10 @@ if ($start_date && $end_date) {
 
     <button type="submit" class="btn btn-danger" id="archive-selected-btn" disabled>Archive Selected</button>
 </form>
+<div id="print-footer">
+    <p id="row-count">Total rows: <?php echo $result->num_rows; ?></p>
+    <p id="print-date">Printed on: <?php echo date('F d, Y H:i:s A'); ?></p>
+</div>
 
 </div>
     </div>
