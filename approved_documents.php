@@ -77,55 +77,26 @@ $result = $stmt->get_result();
     <link rel="stylesheet" href="assets/dist/css/adminlte.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-/* Hide the print header on screen */
-#print-header {
-    display: none;
+#print-header,
+#print-footer,
+#row-count,
+#print-date {
+    display: none; 
 }
 
-/* Print Styles */
 @media print {
-     /* Hide the columns: Category, Status, and Approved At */
-     th:nth-child(5), td:nth-child(5), /* Category column */
-    th:nth-child(6), td:nth-child(6), /* Status column */
-    th:nth-child(7), td:nth-child(7)  /* Approved At column */ {
-        display: none;
-    }
-
-    #print-header {
+    
+    #print-header,
+    #print-footer {
         display: block;
-        text-align: center;
-        margin-bottom: 20px;
     }
 
-    #print-header img {
-        width: 100px;
-        height: auto;
+    
+    #row-count,
+    #print-date {
+        display: block;
     }
 
-    #print-header h3,
-    #print-header p {
-        margin: 0;
-        font-size: 16px;
-    }
-
-    /* Hide interactive elements and unnecessary parts */
-    #filter-form,
-    #print-button,
-    .dataTables_filter, /* Search bar */
-    .dataTables_length, /* Entries dropdown */
-    .dataTables_info,   /* Showing entries info */
-    .dataTables_paginate, /* Pagination controls */
-    .btn,
-    input[type="checkbox"] {
-        display: none !important;
-    }
-
-    /* Hide the checkbox column */
-    th:first-child, td:first-child {
-        display: none;
-    }
-
-    /* Table styling for print */
     table {
         width: 100%;
         border-collapse: collapse;
@@ -141,14 +112,23 @@ $result = $stmt->get_result();
         background-color: #f2f2f2;
     }
 
-    /* Remove table row hover effect */
-    tr:hover {
-        background: none !important;
+    #filter-form,
+    #print-button,
+    .dataTables_filter,
+    .dataTables_length,
+    .dataTables_info,
+    .dataTables_paginate,
+    .btn,
+    input[type="checkbox"] {
+        display: none !important;
+    }
+
+    /* Hide the checkbox column */
+    th:first-child,
+    td:first-child {
+        display: none !important;
     }
 }
-
-
-
 </style>
 </head>
 <body class="hold-transition sidebar-mini">
@@ -199,6 +179,7 @@ if ($start_date && $end_date) {
     $display_date = "Approved List as of " . date('F d, Y');
 }
 ?>
+<center>
 <div id="print-header">
     <h2 style="font-family: 'Georgia, serif', Times, serif; font-size: 20px; font-weight: bold; text-align: center;"><strong>
         Republic of Philippines
@@ -212,9 +193,7 @@ if ($start_date && $end_date) {
     <br>
     <p><strong><?php echo $display_date; ?></strong></p>
 </div>
-
-
-
+</center>
 <h3 class="card-title">Approved Documents</h3>
 </div>
 <div class="card-body">
@@ -244,10 +223,6 @@ if ($start_date && $end_date) {
         </div>
     </div>
 </form>
-
-
-
-
     <!-- Table Form -->
     <form action="approved_documents.php" method="POST" id="archive-form" enctype="multipart/form-data">
   <table class="table table-bordered table-striped" id="resolutionTable">
@@ -290,11 +265,14 @@ if ($start_date && $end_date) {
       ?>
     </tbody>
   </table>
-
-
-    <button type="submit" class="btn btn-danger" id="archive-selected-btn" disabled>Archive Selected</button>
 </form>
+<button type="submit" class="btn btn-danger" id="archive-selected-btn" disabled>Archive Selected</button>
+<div id="print-footer">
+    <p id="row-count">Total rows: <?php echo $result->num_rows; ?></p>
+    <p id="print-date">Printed on: <?php echo date('F d, Y H:i:s A'); ?></p>
+</div>
 
+</div>
 </div>
     </div>
         </div>
@@ -303,7 +281,38 @@ if ($start_date && $end_date) {
                         </div>
 
 
-                        
+                        <script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Get the table element
+    const table = document.querySelector('#resolutionTable');
+    const rowCountElement = document.querySelector('#row-count');
+    const printDateElement = document.querySelector('#print-date');
+
+    // Get the number of rows in the table body
+    const rowCount = table.querySelectorAll('tbody tr').length;
+
+    // Set the row count text
+    if (rowCountElement) {
+        rowCountElement.textContent = Total Rows: ${rowCount};
+    }
+
+    // Set the current print date and time
+    if (printDateElement) {
+        const currentDate = new Date();
+        const formattedDate = currentDate.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+        });
+        const formattedTime = currentDate.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+        });
+        printDateElement.textContent = Printed on: ${formattedDate} at ${formattedTime};
+    }
+});
+</script>
 
 <div class="modal fade" id="addDocumentModal" tabindex="-1" role="dialog" aria-labelledby="addDocumentModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -350,7 +359,6 @@ if ($start_date && $end_date) {
         </div>
     </div>
 </div>
-
 
         <div id="edit-workorder-form" class="popup-form" style="display:none">
     <div class="form-content">
