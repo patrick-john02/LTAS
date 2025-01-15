@@ -88,16 +88,35 @@ $result = $stmt->get_result();
 }
 
 @media print {
-    
+
     #print-header,
     #print-footer {
         display: block;
     }
 
-    
-    #row-count,
+    /* Hide the columns: Category, Status, and Approved At */
+    th:nth-child(5), td:nth-child(5), /* Category column */
+    th:nth-child(6), td:nth-child(6), /* Status column */
+    th:nth-child(7), td:nth-child(7)  /* Approved At column */ {
+        display: none;
+    }
+
+    /* Row count and print date styles */
+    #row-count {
+        display: block;
+        margin-top: 10px;
+        text-align: left;
+        font-weight: bold;
+        float: left; /* Align to the left under the table */
+    }
+
     #print-date {
         display: block;
+        position: absolute;
+        bottom: 20px; /* Adjust for spacing from the bottom of the paper */
+        right: 20px; /* Adjust for spacing from the right edge of the paper */
+        font-weight: bold;
+        font-size: 15px; /* Adjust size as needed */
     }
 
     table {
@@ -130,6 +149,13 @@ $result = $stmt->get_result();
     th:first-child,
     td:first-child {
         display: none !important;
+    }
+
+    /* Ensure the footer does not overlap the table */
+    #print-footer {
+        clear: both;
+        margin-top: 20px; /* Add space between the table and footer */
+        width: 100%;
     }
 }
 </style>
@@ -278,7 +304,7 @@ if ($start_date && $end_date) {
 </form>
 <div id="print-footer">
     <p id="row-count">Total rows: <?php echo $result->num_rows; ?></p>
-    <p id="print-date">Printed on: <?php echo date('F d, Y H:i:s A'); ?></p>
+    
 </div>
 
 </div>
@@ -287,6 +313,12 @@ if ($start_date && $end_date) {
             </section>
                     </div>
                         </div>
+
+                        <div id="print-footer">
+   
+    <p id="print-date">Printed on: <?php echo date('F d, Y H:i:s A'); ?></p>
+</div>
+
 
 <div class="modal fade" id="addDocumentModal" tabindex="-1" role="dialog" aria-labelledby="addDocumentModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
