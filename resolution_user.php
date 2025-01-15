@@ -14,8 +14,12 @@ $uid = $_SESSION['userid'];
 $startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '';
 $endDate = isset($_GET['end_date']) ? $_GET['end_date'] : '';
 
-// query para sa mga approved resolutions
-$sql = "SELECT * FROM documents WHERE user_id = ? AND Category = 'Resolution' AND d_status = 'Approve'";
+// Query to fetch approved resolutions that are not archived
+$sql = "SELECT * FROM documents 
+        WHERE user_id = ? 
+        AND Category = 'Resolution' 
+        AND d_status = 'Approve' 
+        AND isArchive = 0"; // Added condition to exclude archived rows
 $params = [$uid];
 $types = "i";
 
@@ -41,6 +45,7 @@ if ($stmt) {
     die("SQL Error: " . $conn->error);
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -216,7 +221,7 @@ if ($start_date && $end_date) {
 <table class="table table-bordered table-striped" id="resolutionTable">
     <thead>
         <tr>
-            
+            <th><input type="checkbox" id="select-all"></th>
             <th>Resolution No.</th>
             <th>Title</th>
             <th>Authored By</th>
@@ -229,7 +234,7 @@ if ($start_date && $end_date) {
         if ($result->num_rows > 0) {
             while ($row = $result->fetch_assoc()) {
                 echo "<tr data-id='" . htmlspecialchars($row["id"]) . "'>";
-                
+                echo "<td><input type='checkbox' name='selected_documents[]' value='" . htmlspecialchars($row["id"]) . "'></td>";
                 echo "<td><a href='user_document_info.php?id=" . urlencode($row["id"]) . "'>" . htmlspecialchars($row["resolution_no"]) . "</a></td>";
                 echo "<td class='editable' data-column='Title'>" . htmlspecialchars($row["Title"]) . "</td>";
                 echo "<td class='editable' data-column='Author'>" . htmlspecialchars($row["Author"]) . "</td>";
@@ -243,8 +248,7 @@ if ($start_date && $end_date) {
         ?>
     </tbody>
 </table>
-<button type="submit" class="btn btn-danger" id="archive-selected-btn" disabled>Archive Selected</button>
-
+<button id="archive-selected-btn" type="button" class="btn btn-primary">Archive Selected</button>
 
         </div>
     </div>
@@ -385,27 +389,40 @@ if ($start_date && $end_date) {
 </script>
 
 <script>
-$(function () {
-  // check box features 
-  $('#select-all').click(function () {
-    $('input[name="selected_documents[]"]').prop('checked', this.checked);
-    toggleArchiveButton();
-  });
+$(document).ready(function () {
+    // Archive button click event
+    $('#archive-selected-btn').click(function () {
+        const selectedDocs = $('input[name="selected_documents[]"]:checked')
+            .map(function () {
+                return $(this).val();
+            })
+            .get();
 
-  // archive enable and disabled button
-  $('input[name="selected_documents[]"]').click(function () {
-    toggleArchiveButton();
-  });
+        if (selectedDocs.length > 0) {
+            $.ajax({
+                url: 'user_archive_document_user.php',
+                method: 'POST',
+                data: { document_ids: selectedDocs },
+                dataType: 'json',
+                success: function (response) {
+                    if (response.success) {
+                        alert(response.message);
+                        location.reload(); // Reload the page to update the table
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function () {
+                    alert('An error occurred while processing your request.');
+                },
+            });
+        } else {
+            alert('No documents selected for archiving.');
+        }
+    });
 
-  function toggleArchiveButton() {
-    var selectedDocs = $('input[name="selected_documents[]"]:checked').length;
-    if (selectedDocs > 0) {
-      $('#archive-selected-btn').prop('disabled', false);
-    } else {
-      $('#archive-selected-btn').prop('disabled', true);
-    }
-  }
-  $("#resolutionTable").DataTable({
+    // DataTable initialization (run only once when the page loads)
+    $("#resolutionTable").DataTable({
         responsive: true,
         lengthChange: false,
         autoWidth: false,
@@ -417,6 +434,10 @@ $(function () {
                 render: function (data, type, row) {
                     return data; // Return the date
                 }
+            },
+            {
+                orderable: false, // Disable sorting for the checkbox column
+                targets: 0
             }
         ],
         buttons: ["copy", "csv", "excel", "pdf", "print"]
@@ -435,6 +456,7 @@ $(function () {
     });
 });
 </script>
+
 </body>
 </html>
 <?php
