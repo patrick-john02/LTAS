@@ -113,7 +113,7 @@ ob_end_flush(); // Send output to browser
                         // Fetch archived documents
                         $sql = "SELECT resolution_no, ordinance_no, Title, Author, `Date Published`, Category, d_status, approval_timestamp 
                                 FROM documents 
-                                WHERE isArchive = 1 
+                                WHERE isArchive = 1
                                 ORDER BY `Date Published` DESC";
 
                         $result = mysqli_query($conn, $sql);

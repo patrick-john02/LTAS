@@ -109,7 +109,7 @@ ob_end_flush();
                         <?php
                         $sql = "SELECT resolution_no, ordinance_no, Title, Author, `Date Published`, Category, d_status, approval_timestamp 
                                 FROM documents 
-                                WHERE isArchive = 1 
+                                WHERE isArchive = 2 
                                 ORDER BY `Date Published` DESC";
                         $result = mysqli_query($conn, $sql);
 

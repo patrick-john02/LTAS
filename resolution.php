@@ -1,6 +1,6 @@
 <?php
 session_start();
-ob_start(); // output buffering
+ob_start(); // Output buffering
 include('config.php');
 include('./includes/navbar.php');
 include('./includes/sidebar.php');
@@ -8,36 +8,59 @@ include('./includes/sidebar.php');
 // Get selected status filter
 $statusFilter = isset($_GET['status_filter']) ? $_GET['status_filter'] : '';
 
-// Modify SQL query based on filter
+// Prepare the base SQL query
 $sql = "SELECT doc_no, Title, Author, `Date Published`, Category, d_status, id, file_path, resolution_no, approval_timestamp
 FROM documents 
-WHERE isArchive = 0 AND Category = 'Resolution'";
+WHERE (isArchive = 0 OR isArchive = 2) AND Category = 'Resolution'";
 
+// Add a condition for the status filter if provided
+$params = [];
+$types = ""; // To track parameter types for prepared statement
 if (!empty($statusFilter)) {
-$sql .= " AND d_status = ?";
+    $sql .= " AND d_status = ?";
+    $params[] = $statusFilter;
+    $types .= "s"; // Assuming d_status is a string. Use "i" if it's an integer.
 }
 
+// Prepare the SQL statement
+$stmt = $conn->prepare($sql);
 
+// Bind parameters if needed
+if (!empty($params)) {
+    $stmt->bind_param($types, ...$params);
+}
+
+// Execute the statement and fetch the results
+$stmt->execute();
+$result = $stmt->get_result();
+
+// Handle the archiving logic
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_documents'])) {
     $selectedDocs = $_POST['selected_documents'];
     $placeholders = implode(',', array_fill(0, count($selectedDocs), '?'));
 
-    $sql = "UPDATE documents SET isArchive = 1 WHERE id IN ($placeholders)";
-    $stmt = $conn->prepare($sql);
+    // Update query for archiving selected documents
+    $updateSql = "UPDATE documents SET isArchive = 1 WHERE id IN ($placeholders)";
+    $updateStmt = $conn->prepare($updateSql);
 
-    $stmt->bind_param(str_repeat('i', count($selectedDocs)), ...$selectedDocs);
+    // Bind the parameters for the update query
+    $updateStmt->bind_param(str_repeat('i', count($selectedDocs)), ...$selectedDocs);
 
-    if ($stmt->execute()) {
+    // Execute the update query
+    if ($updateStmt->execute()) {
         $_SESSION['message'] = "Selected documents archived successfully!";
     } else {
         $_SESSION['message'] = "Failed to archive selected documents.";
     }
 
+    // Redirect to avoid form resubmission
     header("Location: resolution.php");
     exit();
 }
+
 ob_end_flush(); // Flush output
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>

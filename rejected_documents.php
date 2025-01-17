@@ -38,7 +38,7 @@ $sql = "SELECT d.doc_no, d.Title, d.Author, d.`Date Published`, d.Category, d.d_
          WHERE dt.document_id = d.id AND dt.action = 'Reject' 
          ORDER BY dt.timestamp DESC LIMIT 1) AS rejection_timestamp
         FROM documents d
-        WHERE d.isArchive = 0 AND d.Category IN ('Resolution', 'Ordinance') AND d.d_status = 'Reject'";
+        WHERE (d.isArchive = 0 OR d.isArchive = 2) AND d.Category IN ('Resolution', 'Ordinance') AND d.d_status = 'Reject'";
 
 // Add date filter condition if both start and end dates are provided
 $params = [];

@@ -11,7 +11,7 @@ $statusFilter = isset($_GET['status_filter']) ? $_GET['status_filter'] : '';
 // Modify SQL query based on filter
 $sql = "SELECT doc_no, Title, Author, `Date Published`, Category, d_status, id, file_path, ordinance_no, approval_timestamp
 FROM documents 
-WHERE isArchive = 0 AND Category = 'Ordinance'";
+WHERE (isArchive = 0 OR isArchive = 2) AND Category = 'Ordinance'";
 
 if (!empty($statusFilter)) {
 $sql .= " AND d_status = ?";

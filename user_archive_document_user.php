@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['document_ids'])) {
     }
 
     $placeholders = implode(',', array_fill(0, count($documentIds), '?'));
-    $sql = "UPDATE documents SET isArchive = 1 WHERE id IN ($placeholders)";
+    $sql = "UPDATE documents SET isArchive = 2 WHERE id IN ($placeholders)";
     $stmt = $conn->prepare($sql);
 
     if ($stmt) {

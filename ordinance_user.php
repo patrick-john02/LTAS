@@ -14,8 +14,12 @@ $uid = $_SESSION['userid'];
 $startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '';
 $endDate = isset($_GET['end_date']) ? $_GET['end_date'] : '';
 
-// query para sa mga approved resolutions
-$sql = "SELECT * FROM documents WHERE user_id = ? AND Category = 'Ordinance' AND d_status = 'Approve'";
+// Query to fetch approved resolutions that are not archived
+$sql = "SELECT * FROM documents 
+        WHERE user_id = ? 
+        AND Category = 'Ordinance' 
+        AND d_status = 'Approve' 
+        AND isArchive = 0"; // Added condition to exclude archived rows
 $params = [$uid];
 $types = "i";
 
@@ -41,6 +45,7 @@ if ($stmt) {
     die("SQL Error: " . $conn->error);
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -128,7 +133,7 @@ if ($stmt) {
             <div class="container-fluid">
                 <div class="row mb-2">
                     <div class="col-sm-6">
-                    <h1 class="m-0">Ordinance List</h1>
+                    <h1 class="m-0">Ordiances List</h1>
                         <?php if (isset($_GET['success']) && $_GET['success'] == 1): ?>
                             <div class="alert alert-success" role="alert">
                                 Ordinance successfully added!
@@ -138,7 +143,7 @@ if ($stmt) {
                     <div class="col-sm-6">
                         <ol class="breadcrumb float-sm-right">
                             <li class="breadcrumb-item"><a href="admin_dashboard.php">Home</a></li>
-                            <li class="breadcrumb-item active">Ordinances</li>
+                            <li class="breadcrumb-item active">Ordinance</li>
                         </ol>
                     </div>
                 </div>
@@ -202,7 +207,7 @@ if ($start_date && $end_date) {
 
         <!-- Reset Button -->
         <div class="col-md-1 mb-2 mb-md-0">
-            <a href="resolution_user.php" class="btn btn-warning w-100">Clear Filter</a>
+            <a href="ordinance_user.php" class="btn btn-warning w-100">Clear Filter</a>
         </div>
 
         <!-- Print Button -->
@@ -213,38 +218,41 @@ if ($start_date && $end_date) {
 </form>
 
 
-    <table class="table table-bordered table-striped" id="resolutionTable">
-        <thead>
-            <tr>
-                <th>Ordinance No.</th>
-                <th>Title</th>
-                <th>Authored By</th>
-                <th>Approved on</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php
-            if ($result->num_rows > 0) {
-                while ($row = $result->fetch_assoc()) {
-                    echo "<tr data-id='" . htmlspecialchars($row["id"]) . "'>";
-                    echo "<td><a href='user_document_info.php?id=" . urlencode($row["id"]) . "'>" . htmlspecialchars($row["ordinance_no"]) . "</a></td>";
-                    echo "<td class='editable' data-column='Title'>" . htmlspecialchars($row["Title"]) . "</td>";
-                    echo "<td class='editable' data-column='Author'>" . htmlspecialchars($row["Author"]) . "</td>";
-                    echo "<td>" . date('F d, Y h:i:s A', strtotime($row["approval_timestamp"])) . "</td>";
-                    echo "<td data-column='Author'>" . htmlspecialchars($row["d_status"]) . "</td>";
-                    echo "</tr>";
-                }
-            } else {
-                echo "<tr><td colspan='5' class='text-center'>No documents found</td></tr>";
+<table class="table table-bordered table-striped" id="resolutionTable">
+    <thead>
+        <tr>
+            <th><input type="checkbox" id="select-all"></th>
+            <th>Ordinance No.</th>
+            <th>Title</th>
+            <th>Authored By</th>
+            <th>Approved on</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php
+        if ($result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                echo "<tr data-id='" . htmlspecialchars($row["id"]) . "'>";
+                echo "<td><input type='checkbox' name='selected_documents[]' value='" . htmlspecialchars($row["id"]) . "'></td>";
+                echo "<td><a href='user_document_info.php?id=" . urlencode($row["id"]) . "'>" . htmlspecialchars($row["ordinance_no"]) . "</a></td>";
+                echo "<td class='editable' data-column='Title'>" . htmlspecialchars($row["Title"]) . "</td>";
+                echo "<td class='editable' data-column='Author'>" . htmlspecialchars($row["Author"]) . "</td>";
+                echo "<td>" . date('F d, Y h:i:s A', strtotime($row["approval_timestamp"])) . "</td>";
+                echo "<td>" . htmlspecialchars($row["d_status"]) . "</td>";
+                echo "</tr>";
             }
-            ?>
-        </tbody>
-    </table>
+        } else {
+            echo "<tr><td colspan='6' class='text-center'>No documents found</td></tr>";
+        }
+        ?>
+    </tbody>
+</table>
+<button id="archive-selected-btn" type="button" class="btn btn-primary">Archive Selected</button>
 
         </div>
     </div>
-    <!-- Modal for Adding New Resolution -->
+    <!-- Modal for Adding New Ordinance -->
 <div class="modal fade" id="addDocumentModal" tabindex="-1" role="dialog" aria-labelledby="addDocumentModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -381,27 +389,40 @@ if ($start_date && $end_date) {
 </script>
 
 <script>
-$(function () {
-  // check box features 
-  $('#select-all').click(function () {
-    $('input[name="selected_documents[]"]').prop('checked', this.checked);
-    toggleArchiveButton();
-  });
+$(document).ready(function () {
+    // Archive button click event
+    $('#archive-selected-btn').click(function () {
+        const selectedDocs = $('input[name="selected_documents[]"]:checked')
+            .map(function () {
+                return $(this).val();
+            })
+            .get();
 
-  // archive enable and disabled button
-  $('input[name="selected_documents[]"]').click(function () {
-    toggleArchiveButton();
-  });
+        if (selectedDocs.length > 0) {
+            $.ajax({
+                url: 'user_archive_document_user.php',
+                method: 'POST',
+                data: { document_ids: selectedDocs },
+                dataType: 'json',
+                success: function (response) {
+                    if (response.success) {
+                        alert(response.message);
+                        location.reload(); // Reload the page to update the table
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function () {
+                    alert('An error occurred while processing your request.');
+                },
+            });
+        } else {
+            alert('No documents selected for archiving.');
+        }
+    });
 
-  function toggleArchiveButton() {
-    var selectedDocs = $('input[name="selected_documents[]"]:checked').length;
-    if (selectedDocs > 0) {
-      $('#archive-selected-btn').prop('disabled', false);
-    } else {
-      $('#archive-selected-btn').prop('disabled', true);
-    }
-  }
-  $("#resolutionTable").DataTable({
+    // DataTable initialization (run only once when the page loads)
+    $("#resolutionTable").DataTable({
         responsive: true,
         lengthChange: false,
         autoWidth: false,
@@ -413,6 +434,10 @@ $(function () {
                 render: function (data, type, row) {
                     return data; // Return the date
                 }
+            },
+            {
+                orderable: false, // Disable sorting for the checkbox column
+                targets: 0
             }
         ],
         buttons: ["copy", "csv", "excel", "pdf", "print"]
@@ -431,6 +456,7 @@ $(function () {
     });
 });
 </script>
+
 </body>
 </html>
 <?php
