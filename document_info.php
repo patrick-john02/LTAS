@@ -224,21 +224,40 @@ ob_end_flush(); // Flush output
                         $action = htmlspecialchars($row['action']);
                         $comment = htmlspecialchars($row['comment']);
                 ?>
-                <div class="timeline-step mb-3">
-                    <div class="timeline-content">
-                        <div class="inner-circle"></div>
-                        <p class="h6 mt-3 mb-1"><?php echo htmlspecialchars($row['timestamp']); ?></p>
-                        <p class="text-muted mb-1"><?php echo $action; ?></p>
-                        <?php if ($comment): ?>
-                            <p class="small text-muted"><strong>Comment:</strong> <?php echo $comment; ?></p>
-                        <?php endif; ?>
-                    </div>
+                 <div class="timeline-step mb-3">
+                <div class="timeline-content">
+                    <div class="inner-circle"></div>
+                    <p class="h6 mt-3 mb-1"><?php echo htmlspecialchars($row['timestamp']); ?></p>
+                    <p class="text-muted mb-1"><?php echo $action; ?></p>
+                    <?php if ($comment): ?>
+                        <?php
+                        $max_length = 95; // Set maximum comment length
+                        if (strlen($comment) > $max_length) {
+                            $truncated_comment = substr($comment, 0, $max_length) . '...';
+                            $is_truncated = true;
+                        } else {
+                            $truncated_comment = $comment;
+                            $is_truncated = false;
+                        }
+                        ?>
+                        <p class="small text-muted">
+                            <strong>Admin Comment:</strong> 
+                            <span class="comment-text">
+                                <?php echo htmlspecialchars($truncated_comment); ?>
+                            </span>
+                            <?php if ($is_truncated): ?>
+                                <a href="javascript:void(0);" class="read-more" data-full-comment="<?php echo htmlspecialchars($comment); ?>">Read More</a>
+                            <?php endif; ?>
+                        </p>
+                    <?php endif; ?>
                 </div>
-                <?php endwhile; ?>
-                <?php else: ?>
-                    <p class="text-muted text-center mb-0">No timeline actions recorded yet.</p>
-                <?php endif; ?>
             </div>
+            <?php endwhile; ?>
+            <?php else: ?>
+                <p class="text-muted text-center mb-0">No timeline actions recorded yet.</p>
+            <?php endif; ?>
+        </div>
+
             <div class="card mb-3">
         <div class="card-header bg-secondary text-white">Update Status</div>
         <div class="card-body">
@@ -298,7 +317,22 @@ ob_end_flush(); // Flush output
     </div>
     
     
+    <script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Handle "Read More" click event
+    const readMoreLinks = document.querySelectorAll('.read-more');
+    readMoreLinks.forEach(link => {
+        link.addEventListener('click', function () {
+            const fullComment = this.getAttribute('data-full-comment');
+            const commentTextElement = this.previousElementSibling;
 
+            // Replace truncated text with full comment
+            commentTextElement.textContent = fullComment;
+            this.style.display = 'none'; // Hide "Read More" link
+        });
+    });
+});
+</script>
     <!-- Update Status Form -->
    
 

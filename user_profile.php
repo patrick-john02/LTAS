@@ -166,33 +166,33 @@ ob_end_flush();
                             <h3 class="card-title">Edit Profile</h3>
                         </div>
                         <div class="card-body">
-                            <form action="user_profile.php" method="POST">
-                                <div class="form-group mb-3">
-                                    <label for="username">Username</label>
-                                    <input type="text" class="form-control" id="username" name="username" value="<?php echo htmlspecialchars($user['Username']); ?>" maxlength="8" required>
-                                </div>
-                                <div class="form-group mb-3">
-                                    <label for="first_name">First Name</label>
-                                    <input type="text" class="form-control" id="first_name" name="first_name" value="<?php echo htmlspecialchars($user['FirstName']); ?>" maxlength="8 required>
-                                </div>
-                                <div class="form-group mb-3">
-                                    <label for="last_name">Last Name</label>
-                                    <input type="text" class="form-control" id="last_name" name="last_name" value="<?php echo htmlspecialchars($user['LastName']); ?>" maxlength="8 required>
-                                </div>
-                                <div class="form-group mb-3">
-                                    <label for="email">Email</label>
-                                    <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>"maxlength="8 required>
-                                </div>
-                                <div class="form-group mb-3">
-                                    <label for="position">Position</label>
-                                    <input type="text" class="form-control" id="position" name="position" value="<?php echo htmlspecialchars($user['position']); ?>"maxlength="8 required>
-                                </div>
-                                <div class="form-group mb-3">
-                                    <label for="dept">Department</label>
-                                    <input type="text" class="form-control" id="dept" name="dept" value="<?php echo htmlspecialchars($user['dept']); ?>"maxlength="8 required>
-                                </div>
-                                <button type="submit" class="btn btn-primary">Save Changes</button>
-                            </form>
+                        <form action="user_profile.php" method="POST">
+    <div class="form-group mb-3">
+        <label for="username">Username</label>
+        <input type="text" class="form-control" id="username" name="username" value="<?php echo htmlspecialchars($user['Username']); ?>" maxlength="8" required>
+    </div>
+    <div class="form-group mb-3">
+        <label for="first_name">First Name</label>
+        <input type="text" class="form-control" id="first_name" name="first_name" value="<?php echo htmlspecialchars($user['FirstName']); ?>" maxlength="8" required>
+    </div>
+    <div class="form-group mb-3">
+        <label for="last_name">Last Name</label>
+        <input type="text" class="form-control" id="last_name" name="last_name" value="<?php echo htmlspecialchars($user['LastName']); ?>" maxlength="8" required>
+    </div>
+    <div class="form-group mb-3">
+        <label for="email">Email</label>
+        <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" maxlength="8" required>
+    </div>
+    <div class="form-group mb-3">
+        <label for="position">Position</label>
+        <input type="text" class="form-control" id="position" name="position" value="<?php echo htmlspecialchars($user['position']); ?>" maxlength="8" required>
+    </div>
+    <div class="form-group mb-3">
+        <label for="dept">Department</label>
+        <input type="text" class="form-control" id="dept" name="dept" value="<?php echo htmlspecialchars($user['dept']); ?>" maxlength="8" required>
+    </div>
+    <button type="submit" name="update_profile" class="btn btn-primary">Save Changes</button>
+</form>
                         </div>
                     </div>
                 </div>
