@@ -1,62 +1,61 @@
 <?php
+// Ensure the user is logged in
 session_start();
-
-if(!isset($_SESSION['userid'])) {
+if (!isset($_SESSION['userid'])) {
     header("location:login.php");
+    exit;
 }
-
-if (!isset($_SESSION['username'])) {
-  $_SESSION['username'] = 'Guest'; 
-}
-
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
-include('config.php');
 include('./includes/user/user_navbar.php');
 include('./includes/user/user_sidebar.php');
-// include('adddocuments.php');
-// include('deletedocument.php');
-// Get the logged-in user's ID
-$user_id = $_SESSION['userid'];
+// Database connection
+include('config.php');
+if (!$conn) {
+    die("Connection failed: " . mysqli_connect_error());
+}
 
-// Queries to count document statuses for the current user
-$query_pending = "SELECT COUNT(*) as pending_count FROM documents WHERE d_status = 'Pending' AND user_id = ?";
-$query_approved = "SELECT COUNT(*) as approved_count FROM documents WHERE d_status = 'Approve' AND user_id = ?";
-$query_rejected = "SELECT COUNT(*) as rejected_count FROM documents WHERE d_status = 'Reject' AND user_id = ?";
-$query_on_process = "SELECT COUNT(*) as on_process_count FROM documents WHERE d_status IN ('First Reading', 'In Committee', 'Second Reading') AND user_id = ?";
+$userId = $_SESSION['userid'];
 
-// Prepare and execute the queries
-$stmt_pending = $conn->prepare($query_pending);
-$stmt_pending->bind_param("i", $user_id);
-$stmt_pending->execute();
-$result_pending = $stmt_pending->get_result();
-$pending_count = $result_pending->fetch_assoc()['pending_count'];
+// Initialize count variables
+$pending_count = 0;
+$on_process_count = 0;
+$approved_count = 0;
+$rejected_count = 0;
 
-$stmt_approved = $conn->prepare($query_approved);
-$stmt_approved->bind_param("i", $user_id);
-$stmt_approved->execute();
-$result_approved = $stmt_approved->get_result();
-$approved_count = $result_approved->fetch_assoc()['approved_count'];
+// Query for Pending Documents
+$query_pending = "SELECT COUNT(*) AS count FROM documents WHERE user_id = $userId AND d_status = 'Pending' AND isArchive = 0";
+$result_pending = mysqli_query($conn, $query_pending);
+if ($result_pending) {
+    $row = mysqli_fetch_assoc($result_pending);
+    $pending_count = $row['count'];
+}
 
-$stmt_rejected = $conn->prepare($query_rejected);
-$stmt_rejected->bind_param("i", $user_id);
-$stmt_rejected->execute();
-$result_rejected = $stmt_rejected->get_result();
-$rejected_count = $result_rejected->fetch_assoc()['rejected_count'];
+// Query for On Process Documents
+$query_on_process = "SELECT COUNT(*) AS count FROM documents WHERE user_id = $userId AND d_status = 'On Process' AND isArchive = 0";
+$result_on_process = mysqli_query($conn, $query_on_process);
+if ($result_on_process) {
+    $row = mysqli_fetch_assoc($result_on_process);
+    $on_process_count = $row['count'];
+}
 
-$stmt_on_process = $conn->prepare($query_on_process);
-$stmt_on_process->bind_param("i", $user_id);
-$stmt_on_process->execute();
-$result_on_process = $stmt_on_process->get_result();
-$on_process_count = $result_on_process->fetch_assoc()['on_process_count'];
+// Query for Approved Documents
+$query_approved = "SELECT COUNT(*) AS count FROM documents WHERE user_id = $userId AND d_status = 'Approved' AND isArchive = 0";
+$result_approved = mysqli_query($conn, $query_approved);
+if ($result_approved) {
+    $row = mysqli_fetch_assoc($result_approved);
+    $approved_count = $row['count'];
+}
 
-$stmt_pending->close();
-$stmt_approved->close();
-$stmt_rejected->close();
-$stmt_on_process->close();
+// Query for Rejected Documents
+$query_rejected = "SELECT COUNT(*) AS count FROM documents WHERE user_id = $userId AND d_status = 'Rejected' AND isArchive = 0";
+$result_rejected = mysqli_query($conn, $query_rejected);
+if ($result_rejected) {
+    $row = mysqli_fetch_assoc($result_rejected);
+    $rejected_count = $row['count'];
+}
 ?>
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -111,44 +110,43 @@ $stmt_on_process->close();
     <section class="content">
       <div class="container-fluid">
         <div class="row">
-          <!-- Pending Documents -->
-          <div class="col-lg-3 col-6">
-            <div class="small-box bg-info">
-              <div class="inner">
-                <h3><?php echo $pending_count; ?></h3>
-                <p>Pending Documents</p>
-              </div>
-              <div class="icon">
-                <i class="ion ion-ios-timer"></i>
-              </div>
-              <!-- <a href="./sent_document_user.php" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a> -->
-            </div>
-          </div>
+        <!-- Pending Documents -->
+<div class="col-lg-3 col-6">
+    <div class="small-box bg-info">
+        <div class="inner">
+            <h3><?php echo $pending_count; ?></h3>
+            <p>Pending Documents</p>
+        </div>
+        <div class="icon">
+            <i class="ion ion-ios-timer"></i>
+        </div>
+    </div>
+</div>
 
-          <!-- On Process Documents -->
-          <div class="col-lg-3 col-6">
-            <div class="small-box bg-secondary">
-              <div class="inner">
-                <h3><?php echo $on_process_count; ?></h3>
-                <p>On Process Documents</p>
-              </div>
-              <div class="icon">
-                <i class="ion ion-ios-cog"></i>
-              </div>
-              <!-- <a href="./ordinance_sent_document.php" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a> -->
-            </div>
-          </div>
+<!-- On Process Documents -->
+<div class="col-lg-3 col-6">
+    <div class="small-box bg-secondary">
+        <div class="inner">
+            <h3><?php echo $on_process_count; ?></h3>
+            <p>On Process Documents</p>
+        </div>
+        <div class="icon">
+            <i class="ion ion-ios-cog"></i>
+        </div>
+    </div>
+</div>
 
-          <!-- Approved Documents -->
-          <div class="col-lg-3 col-6">
-            <div class="small-box bg-success">
-              <div class="inner">
-                <h3><?php echo $approved_count; ?></h3>
-                <p>Approved Documents</p>
-              </div>
-              <div class="icon">
-                <i class="ion ion-ios-thumbs-up"></i>
-              </div>
+<!-- Approved Documents -->
+<div class="col-lg-3 col-6">
+    <div class="small-box bg-success">
+        <div class="inner">
+            <h3><?php echo $approved_count; ?></h3>
+            <p>Approved Documents</p>
+        </div>
+        <div class="icon">
+            <i class="ion ion-ios-thumbs-up"></i>
+        </div>
+
               <!-- <a href="./resolution_user.php" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a> -->
             </div>
           </div>
@@ -191,62 +189,68 @@ $stmt_on_process->close();
       <!-- /.card-header -->
 
       <div class="card-body table-responsive p-0">
-        <table class="table table-hover text-nowrap" id="documentTable">
-          <thead>
-            <tr>
-              <th>Document Number</th>
-              <th>Title</th>
-              <th>Status</th>
-              <th>Category</th>
-              <th>Date Submitted</th>
-              <th>Attachment</th>
-            </tr>
-          </thead>
-          <tbody>
-                        <?php
-                        $userId = $_SESSION['userid'];
-                        $query = "SELECT * FROM documents WHERE user_id = $userId AND isArchive = 0";
-                        $result = mysqli_query($conn, $query);
+      <table class="table table-hover text-nowrap" id="documentTable">
+    <thead>
+        <tr>
+            <th>Document Number</th>
+            <th>Title</th>
+            <th>Status</th>
+            <th>Category</th>
+            <th>Date Submitted</th>
+            <th>Attachment</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php
+        $userId = $_SESSION['userid'];
+        $query = "SELECT d.doc_no, d.title, d.date_published, d.d_status, d.resolution_no, d.ordinance_no, d.file_path, c.name AS Category 
+                  FROM documents d 
+                  JOIN categories c ON d.category_id = c.id 
+                  WHERE d.user_id = $userId AND d.isArchive = 0";
 
-                        if (mysqli_num_rows($result) > 0) {
-                            while ($row = mysqli_fetch_assoc($result)) {
-                                // Determine which document number to display
-                                $documentNumber = '';
-                                if ($row['Category'] == 'Resolution') {
-                                    $documentNumber = $row['resolution_no'];
-                                } elseif ($row['Category'] == 'Ordinance') {
-                                    $documentNumber = $row['ordinance_no'];
-                                } else {
-                                    $documentNumber = $row['doc_no']; // Default fallback
-                                }
+        $result = mysqli_query($conn, $query);
 
-                                // Add conditional class for status
-                                $statusClass = '';
-                                if ($row['d_status'] == 'Approve') {
-                                    $statusClass = 'badge badge-success';
-                                } elseif ($row['d_status'] == 'Denied') {
-                                    $statusClass = 'badge badge-danger';
-                                } else {
-                                    $statusClass = 'badge badge-secondary';
-                                }
+        if (mysqli_num_rows($result) > 0) {
+            while ($row = mysqli_fetch_assoc($result)) {
+                // Determine which document number to display
+                $documentNumber = '';
+                if ($row['Category'] == 'Resolution') {
+                    $documentNumber = $row['resolution_no'];
+                } elseif ($row['Category'] == 'Ordinance') {
+                    $documentNumber = $row['ordinance_no'];
+                } else {
+                    $documentNumber = $row['doc_no']; // Default fallback
+                }
 
-                                echo "<tr>
-                                        <td>{$documentNumber}</td>
-                                        <td>{$row['Title']}</td>
-                                        <td><span class='{$statusClass}'>{$row['d_status']}</span></td>
-                                        <td>{$row['Category']}</td>
-                                        <td>{$row['Date Published']}</td>
-                                        <td>
-                                            <a href='{$row['file_path']}' class='btn btn-sm btn-primary' target='_blank'>View</a>
-                                        </td>
-                                      </tr>";
-                            }
-                        } else {
-                            echo "<tr><td colspan='6' class='text-center'>No documents submitted yet.</td></tr>";
-                        }
-                        ?>
-                    </tbody>
-        </table>
+                // Add conditional class for status
+                $statusClass = '';
+                if ($row['d_status'] == 'Approve') {
+                    $statusClass = 'badge badge-success';
+                } elseif ($row['d_status'] == 'Denied') {
+                    $statusClass = 'badge badge-danger';
+                } else {
+                    $statusClass = 'badge badge-secondary';
+                }
+
+                // Output the table row
+                echo "<tr>
+                        <td>{$documentNumber}</td>
+                        <td>{$row['title']}</td>
+                        <td><span class='{$statusClass}'>{$row['d_status']}</span></td>
+                        <td>{$row['Category']}</td>
+                        <td>{$row['date_published']}</td>
+                        <td>
+                            <a href='{$row['file_path']}' class='btn btn-sm btn-primary' target='_blank'>View</a>
+                        </td>
+                      </tr>";
+            }
+        } else {
+            echo "<tr><td colspan='6' class='text-center'>No documents submitted yet.</td></tr>";
+        }
+        ?>
+    </tbody>
+</table>
+
       </div>
       <!-- /.card-body -->
     </div>

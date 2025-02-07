@@ -2,32 +2,36 @@
 include ('config.php');
 session_start();
 
-//print_r($_SESSION);
-
 if($_SERVER["REQUEST_METHOD"] == "POST")
 {
-  $username = addslashes ($_POST['username']);
-  $pword = addslashes($_POST['pword']);
+    $username = addslashes($_POST['username']);
+    $pword = addslashes($_POST['pword']);
 
-  $sql = mysqli_query($conn, "SELECT * FROM admin WHERE Username='$username' AND Password='$pword'");
-  $count = mysqli_num_rows($sql);
+    // Use a prepared statement for security
+    $stmt = $conn->prepare("SELECT a.id AS admin_id, u.username, u.password FROM admin a JOIN users u ON a.user_id = u.ID WHERE u.username = ? AND u.password = ?");
+    $stmt->bind_param("ss", $username, $pword);  // 'ss' means both are strings
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $count = $result->num_rows;
+    
+    if($count == 1) {
+        $brow2 = $result->fetch_assoc(); 
+        $uid = $brow2['admin_id'];
 
-  if($count == 1){
-      $sql2 = mysqli_query($conn, "SELECT * FROM admin WHERE Username='$username' AND Password='$pword'");
-      $brow2 = $sql2->fetch_assoc(); 
-      $uid = $brow2['id'];
-     
-      
-    $_SESSION['username'] = $username;
-    $_SESSION['userid'] = $uid;
-    $_SESSION['userType'] = 'admin';
-    header("location:admin_dashboard.php");
-  }else{
-    $error = "Invalid username/password credentials. Try again!";
-  }
+        $_SESSION['username'] = $username;
+        $_SESSION['userid'] = $uid;
+        $_SESSION['userType'] = 'Admin';
+        header("location:admin_dashboard.php");
+    } else {
+        $error = "Invalid username/password credentials. Try again!";
+    }
+
+    $stmt->close();
 }
-
 ?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 

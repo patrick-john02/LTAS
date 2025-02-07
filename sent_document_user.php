@@ -14,20 +14,24 @@ $uid = $_SESSION['userid'];
 $startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '';
 $endDate = isset($_GET['end_date']) ? $_GET['end_date'] : '';
 
-// Base query: Select all resolutions (no filtering by status)
-$sql = "SELECT * FROM documents WHERE user_id = ? AND Category = 'Resolution'";
+// Base query: Select all documents with 'Resolution' category (no filtering by status)
+$sql = "SELECT d.* 
+        FROM documents d
+        JOIN categories c ON d.category_id = c.id 
+        WHERE d.user_id = ? 
+        AND c.name = 'Resolution'";  // Filter by category name (Resolution)
 $params = [$uid];
 $types = "i";
 
 // Date range filtering
 if (!empty($startDate) && !empty($endDate)) {
-    $sql .= " AND `Date Published` BETWEEN ? AND ?";
+    $sql .= " AND d.date_published BETWEEN ? AND ?";  // Use correct column for date published
     $params[] = $startDate;
     $params[] = $endDate;
-    $types .= "ss";
+    $types .= "ss"; // Add two string parameters (start and end date)
 }
 
-$sql .= " ORDER BY `Date Published` DESC"; // Sort by date
+$sql .= " ORDER BY d.date_published DESC";  // Sort by date
 
 $stmt = $conn->prepare($sql);
 if ($stmt) {
@@ -39,6 +43,7 @@ if ($stmt) {
     die("SQL Error: " . $conn->error);
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>

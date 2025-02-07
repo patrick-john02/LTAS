@@ -60,9 +60,14 @@ if ($stmt = $conn->prepare($query)) {
 $new_documents_today = [];
 $today_date = date('Y-m-d'); //time zone here in Pinas
 
-$query = "SELECT doc_no, Title, Description, Author, `Date Published`, Category, d_status, ordinance_no, resolution_no
+$query = "SELECT doc_no, Title, Description, Author, date_published, Category, d_status, ordinance_no, resolution_no
           FROM documents 
-          WHERE DATE(`Date Published`) = ?";
+          WHERE DATE(date_published) = ?";
+
+
+
+
+
 if ($stmt = $conn->prepare($query)) {
     $stmt->bind_param("s", $today_date);
     $stmt->execute();
@@ -73,12 +78,13 @@ if ($stmt = $conn->prepare($query)) {
     echo "Error preparing statement for today's documents: " . $conn->error;
 }
 
+
 $approved_data = [];
 $rejected_data = [];
 $months = [];
 
 $query = "SELECT 
-            DATE_FORMAT(`Date Published`, '%Y-%m') as month, 
+            DATE_FORMAT(`date_published`, '%Y-%m') as month, 
             SUM(CASE WHEN d_status = 'Approve' THEN 1 ELSE 0 END) as approved_count, 
             SUM(CASE WHEN d_status = 'Reject' THEN 1 ELSE 0 END) as rejected_count 
           FROM documents 
@@ -222,9 +228,9 @@ tr:hover {
             <table class="table table-striped table-valign-middle">
             <thead>
   <tr>
-    <th>Category #</th>
-    <th>Document Type</th>
-    <th>Title</th>
+    <th hidden>Category #</th>
+    <th hidden>Document Type</th>
+    <th hidden>Title</th>
     <th>Authored By</th>
     <th>Date</th>
     <th>Status</th>
@@ -245,7 +251,7 @@ tr:hover {
       ?>
       <tr onclick="window.location='<?php echo $url; ?>'">
         <!-- Combine ordinance_no and resolution_no for doc_no -->
-        <td>
+        <td hidden>
           <?php 
             // Handle potential null values
             $resolution_no = isset($document['resolution_no']) && $document['resolution_no'] !== NULL ? htmlspecialchars($document['resolution_no']) : '';
@@ -261,10 +267,10 @@ tr:hover {
             }
           ?>
         </td>
-        <td><?php echo htmlspecialchars($document['Category']); ?></td>
-        <td><?php echo htmlspecialchars($document['Title']); ?></td>
+        <td hidden><?php echo htmlspecialchars($document['Category']); ?></td>
+        <td hidden><?php echo htmlspecialchars($document['title']); ?></td>
         <td><?php echo htmlspecialchars($document['Author']); ?></td>
-        <td><?php echo htmlspecialchars($document['Date Published']); ?></td>
+        <td><?php echo htmlspecialchars($document['date_published']); ?></td>
         <td><?php echo htmlspecialchars($document['d_status']); ?></td>
       </tr>
     <?php endforeach; ?>

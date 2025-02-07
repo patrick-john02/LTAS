@@ -111,10 +111,10 @@ ob_end_flush(); // Send output to browser
                     <tbody>
                         <?php
                         // Fetch archived documents
-                        $sql = "SELECT resolution_no, ordinance_no, Title, Author, `Date Published`, Category, d_status, approval_timestamp 
+                        $sql = "SELECT resolution_no, ordinance_no, Title, Author, `date_published`, Category, d_status, approval_timestamp 
                                 FROM documents 
                                 WHERE isArchive = 1
-                                ORDER BY `Date Published` DESC";
+                                ORDER BY `date_published` DESC";
 
                         $result = mysqli_query($conn, $sql);
 
@@ -134,7 +134,7 @@ ob_end_flush(); // Send output to browser
                                 echo "<td><a href='document_info.php?id=" . urlencode($row["resolution_no"]) . "'>" . $docNumber . "</a></td>";
                                 echo "<td>" . htmlspecialchars($row["Title"]) . "</td>";
                                 echo "<td>" . htmlspecialchars($row["Author"]) . "</td>";
-                                echo "<td>" . date('Y-m-d', strtotime($row["Date Published"])) . "</td>";
+                                echo "<td>" . date('Y-m-d', strtotime($row["date_published"])) . "</td>";
                                 echo "<td>" . htmlspecialchars($row["Category"]) . "</td>";
                                 echo "<td>" . htmlspecialchars($row["d_status"]) . "</td>";
                                 

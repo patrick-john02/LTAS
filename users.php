@@ -9,12 +9,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (isset($_POST['user_id'])) {
         // Update User
         $userId = intval($_POST['user_id']);
-        $username = htmlspecialchars(trim($_POST['username']));
-        $firstname = htmlspecialchars(trim($_POST['firstname']));
-        $lastname = htmlspecialchars(trim($_POST['lastname']));
-        $accessLevel = htmlspecialchars(trim($_POST['accessLevel']));
-        $position = htmlspecialchars(trim($_POST['position']));
-        $dept = htmlspecialchars(trim($_POST['dept']));
+        $username = isset($_POST['username']) ? htmlspecialchars(trim($_POST['username'])) : ''; // Check if 'username' exists
+        $firstname = isset($_POST['firstname']) ? htmlspecialchars(trim($_POST['firstname'])) : ''; // Check if 'firstname' exists
+        $lastname = isset($_POST['lastname']) ? htmlspecialchars(trim($_POST['lastname'])) : ''; // Check if 'lastname' exists
+        $accessLevel = isset($_POST['accessLevel']) ? htmlspecialchars(trim($_POST['accessLevel'])) : ''; // Check if 'accessLevel' exists
+        $position = isset($_POST['position']) ? htmlspecialchars(trim($_POST['position'])) : ''; // Check if 'position' exists
+        $dept = isset($_POST['dept']) ? htmlspecialchars(trim($_POST['dept'])) : ''; // Check if 'dept' exists
 
         $updatePassword = "";
         if (!empty(trim($_POST['password']))) {
@@ -49,6 +49,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $conn->close();
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -130,9 +131,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         </div>
                     
                         <div class="table-responsive">
-                            <table id="example1" class="table table-bordered table-striped">
-                                <thead>
-                                    <tr>
+                        <table id="example1" class="table table-bordered table-striped">
+    <thead>
+        <tr>
             <th>Username</th>
             <th>Email</th>
             <th>Firstname</th>
@@ -145,59 +146,65 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </tr>
     </thead>
     <tbody>
-    <?php
-    // Fetch users, ensuring that the status is set to "Inactive" by default
-    $sql = "SELECT * FROM users ORDER BY u_status ASC";
-    $result = $conn->query($sql);
-    if ($result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
-            $uid = $row["ID"];
-            $docName = $row["Username"];
-            $status = $row["u_status"] == "Active" ? "Active" : "Inactive";  // Default to Inactive if not Active
-            
-            echo "<tr>";
-            echo "<td contenteditable='true' class='editable' data-field='Username' data-id='" . $uid . "'>" . htmlspecialchars($row["Username"]) . "</td>";
-            echo "<td contenteditable='true' class='editable' data-field='email' data-id='" . $uid . "'>" . htmlspecialchars($row["email"]) . "</td>";
-            echo "<td contenteditable='true' class='editable' data-field='FirstName' data-id='" . $uid . "'>" . htmlspecialchars($row["FirstName"]) . "</td>";
-            echo "<td contenteditable='true' class='editable' data-field='LastName' data-id='" . $uid . "'>" . htmlspecialchars($row["LastName"]) . "</td>";
-            echo "<td contenteditable='true' class='editable' data-field='position' data-id='" . $uid . "'>" . htmlspecialchars($row["position"]) . "</td>";
-            echo "<td contenteditable='true' class='editable' data-field='dept' data-id='" . $uid . "'>" . htmlspecialchars($row["dept"]) . "</td>";
-            echo "<td contenteditable='true' class='editable' data-field='AccessLevel' data-id='" . $uid . "'>" . htmlspecialchars($row["AccessLevel"]) . "</td>";
-            echo "<td>";
-            
-            // Display current status and add the toggle button for status change
-            if ($status == "Inactive") {
-                echo "<form action='update_user_status.php' method='POST' style='display:inline' id='frm-$uid'>";
+        <?php
+        // Fetch users, ensuring that the status is set to "Inactive" by default
+        $sql = "SELECT * FROM users ORDER BY u_status ASC";
+        $result = $conn->query($sql);
+        if ($result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                $uid = $row["ID"];
+                $docName = $row["Username"];
+                $status = $row["u_status"] == "Active" ? "Active" : "Inactive";  // Default to Inactive if not Active
+                
+                // Fetch values safely with isset() to avoid warnings
+                $email = isset($row["email"]) ? htmlspecialchars($row["email"]) : '';
+                $position = isset($row["position"]) ? htmlspecialchars($row["position"]) : '';
+                $dept = isset($row["dept"]) ? htmlspecialchars($row["dept"]) : '';
+                $accessLevel = isset($row["AccessLevel"]) ? htmlspecialchars($row["AccessLevel"]) : '';
+
+                echo "<tr>";
+                echo "<td contenteditable='true' class='editable' data-field='Username' data-id='" . $uid . "'>" . htmlspecialchars($row["Username"]) . "</td>";
+                echo "<td contenteditable='true' class='editable' data-field='email' data-id='" . $uid . "'>" . $email . "</td>";
+                echo "<td contenteditable='true' class='editable' data-field='FirstName' data-id='" . $uid . "'>" . htmlspecialchars($row["FirstName"]) . "</td>";
+                echo "<td contenteditable='true' class='editable' data-field='LastName' data-id='" . $uid . "'>" . htmlspecialchars($row["LastName"]) . "</td>";
+                echo "<td contenteditable='true' class='editable' data-field='position' data-id='" . $uid . "'>" . $position . "</td>";
+                echo "<td contenteditable='true' class='editable' data-field='dept' data-id='" . $uid . "'>" . $dept . "</td>";
+                echo "<td contenteditable='true' class='editable' data-field='AccessLevel' data-id='" . $uid . "'>" . $accessLevel . "</td>";
+                echo "<td>";
+                
+                // Display current status and add the toggle button for status change
+                if ($status == "Inactive") {
+                    echo "<form action='update_user_status.php' method='POST' style='display:inline' id='frm-$uid'>";
+                    echo "<input type='hidden' name='id' value='" . $uid . "'>";
+                    echo "<input type='hidden' name='new_status' value='Active'>"; // To change to Active
+                    echo "<input type='submit' class='btn btn-sm btn-success' value='Active' onclick='return confirm(\"Are you sure you want to activate this user?\")'>";
+                    echo "</form>";
+                } else {
+                    echo "<form action='update_user_status.php' method='POST' style='display:inline' id='frm-$uid'>";
+                    echo "<input type='hidden' name='id' value='" . $uid . "'>";
+                    echo "<input type='hidden' name='new_status' value='Inactive'>"; // To change to Inactive
+                    echo "<input type='submit' class='btn btn-sm btn-danger' value='Inactive' onclick='return confirm(\"Are you sure you want to deactivate this user?\")'>";
+                    echo "</form>";
+                }
+                
+                echo "</td>"; // End of status column
+                echo "<td>";
+                echo "<div style='display: flex; gap: 10px; align-items: center;'>";
+                echo "<form action='deleteuser.php' method='GET' style='display:inline' id='frm-$uid' onSubmit='return confirm(\"Are you sure to delete: $docName?\")'>";
                 echo "<input type='hidden' name='id' value='" . $uid . "'>";
-                echo "<input type='hidden' name='new_status' value='Active'>"; // To change to Active
-                echo "<input type='submit' class='btn btn-sm btn-success' value='Active' onclick='return confirm(\"Are you sure you want to activate this user?\")'>";
+                echo "<button type='submit' class='btn btn-link delete-button' title='Delete' style='color: red;'>";
+                echo "<i class='fas fa-trash-alt'></i>";
+                echo "</button>";
                 echo "</form>";
-            } else {
-                echo "<form action='update_user_status.php' method='POST' style='display:inline' id='frm-$uid'>";
-                echo "<input type='hidden' name='id' value='" . $uid . "'>";
-                echo "<input type='hidden' name='new_status' value='Inactive'>"; // To change to Inactive
-                echo "<input type='submit' class='btn btn-sm btn-danger' value='Inactive' onclick='return confirm(\"Are you sure you want to deactivate this user?\")'>";
-                echo "</form>";
+                echo "</div>";
+                echo "</td>";
+                echo "</tr>";
             }
-            
-            echo "</td>"; // End of status column
-            echo "<td>";
-            echo "<div style='display: flex; gap: 10px; align-items: center;'>";
-            echo "<form action='deleteuser.php' method='GET' style='display:inline' id='frm-$uid' onSubmit='return confirm(\"Are you sure to delete: $docName?\")'>";
-            echo "<input type='hidden' name='id' value='" . $uid . "'>";
-            echo "<button type='submit' class='btn btn-link delete-button' title='Delete' style='color: red;'>";
-            echo "<i class='fas fa-trash-alt'></i>";
-            echo "</button>";
-            echo "</form>";
-            echo "</div>";
-            echo "</td>";
-            echo "</tr>";
         }
-    }
-    $conn->close();
-    ?>
-        </tbody>
-    </table>
+        $conn->close();
+        ?>
+    </tbody>
+</table>
 
         </div>
     </div>

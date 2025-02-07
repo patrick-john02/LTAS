@@ -33,7 +33,7 @@ $currentDate = new DateTime();
 $startDate = isset($_GET['start_date']) ? $_GET['start_date'] . ' 00:00:00' : '';
 $endDate = isset($_GET['end_date']) ? $_GET['end_date'] . ' 23:59:59' : '';
 
-$sql = "SELECT doc_no, Title, Author, `Date Published`, Category, d_status, id, file_path, resolution_no, ordinance_no,
+$sql = "SELECT doc_no, Title, Author, `date_published`, Category, d_status, id, file_path, resolution_no, ordinance_no,
     (SELECT timestamp FROM document_timeline WHERE document_id = documents.id AND action = 'Approve' ORDER BY timestamp DESC LIMIT 1) AS timeline_approval_timestamp, approval_timestamp
     FROM documents 
     WHERE (isArchive = 0 OR isArchive = 2) AND Category IN ('Resolution', 'Ordinance') AND d_status = 'Approve'";

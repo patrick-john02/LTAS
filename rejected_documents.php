@@ -32,7 +32,7 @@ $currentDate = new DateTime();
 $startDate = isset($_GET['start_date']) ? $_GET['start_date'] . ' 00:00:00' : '';
 $endDate = isset($_GET['end_date']) ? $_GET['end_date'] . ' 23:59:59' : '';
 
-$sql = "SELECT d.doc_no, d.Title, d.Author, d.`Date Published`, d.Category, d.d_status, d.id, d.file_path, d.resolution_no, d.ordinance_no,
+$sql = "SELECT d.doc_no, d.Title, d.Author, d.`date_published`, d.Category, d.d_status, d.id, d.file_path, d.resolution_no, d.ordinance_no,
         (SELECT dt.timestamp 
          FROM document_timeline dt 
          WHERE dt.document_id = d.id AND dt.action = 'Reject' 

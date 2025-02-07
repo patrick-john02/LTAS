@@ -43,9 +43,9 @@ if (isset($_POST['restore']) && (!empty($_POST['resolution_no']) || !empty($_POS
     exit();
 }
 
-ob_end_flush();
+$sql = "SELECT * FROM documents WHERE isArchive = 1 ORDER BY date_published DESC"; // Correct column for date_published
+$result = mysqli_query($conn, $sql);
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -92,53 +92,45 @@ ob_end_flush();
                 <div class="card-body">
                 <div class="table-responsive">
                 <table id="archivedDocs" class="table table-bordered table-striped">
-                    <thead>
-                        <tr>
-                           
-                            <th>Document No</th>
-                            <th>Title</th>
-                            <th>Author</th>
-                            <th>Date Published</th>
-                            <th>Category</th>
-                            <th>Status</th>
-                            <th>Approval Date</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        $sql = "SELECT resolution_no, ordinance_no, Title, Author, `Date Published`, Category, d_status, approval_timestamp 
-                                FROM documents 
-                                WHERE isArchive = 2 
-                                ORDER BY `Date Published` DESC";
-                        $result = mysqli_query($conn, $sql);
-
-                        if ($result && mysqli_num_rows($result) > 0) {
-                            while ($row = mysqli_fetch_assoc($result)) {
-                                echo "<tr>";
-                               
-                                $docNumber = $row['Category'] == 'Resolution' ? $row['resolution_no'] : $row['ordinance_no'];
-                                echo "<td>" . htmlspecialchars($docNumber) . "</td>";
-                                echo "<td>" . htmlspecialchars($row['Title']) . "</td>";
-                                echo "<td>" . htmlspecialchars($row['Author']) . "</td>";
-                                echo "<td>" . date('Y-m-d', strtotime($row['Date Published'])) . "</td>";
-                                echo "<td>" . htmlspecialchars($row['Category']) . "</td>";
-                                echo "<td>" . htmlspecialchars($row['d_status']) . "</td>";
-                                echo "<td>" . ($row['approval_timestamp'] ? date('Y-m-d H:i', strtotime($row['approval_timestamp'])) : 'N/A') . "</td>";
-                                echo "<td>
-                                    <form action='user_archive_documents.php' method='POST'>
-                                        <input type='hidden' name='" . ($row['resolution_no'] ? 'resolution_no' : 'ordinance_no') . "' value='" . htmlspecialchars($docNumber) . "'>
-                                        <button type='submit' name='restore' class='btn btn-success btn-sm'>Restore</button>
-                                    </form>
-                                  </td>";
-                                echo "</tr>";
-                            }
-                        } else {
-                            echo "<tr><td colspan='9' class='text-center'>No archived documents found.</td></tr>";
-                        }
-                        ?>
-                    </tbody>
-                </table>
+    <thead>
+        <tr>
+            <th>Document No</th>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Date Published</th>
+            <th>Category</th>
+            <th>Status</th>
+            <th>Approval Date</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php
+        if ($result && mysqli_num_rows($result) > 0) {
+            while ($row = mysqli_fetch_assoc($result)) {
+                echo "<tr>";
+                $docNumber = $row['Category'] == 'Resolution' ? $row['resolution_no'] : $row['ordinance_no'];
+                echo "<td>" . htmlspecialchars($docNumber) . "</td>";
+                echo "<td>" . htmlspecialchars($row['Title']) . "</td>";
+                echo "<td>" . htmlspecialchars($row['Author']) . "</td>";
+                echo "<td>" . date('Y-m-d', strtotime($row['date_published'])) . "</td>";  // Updated column name
+                echo "<td>" . htmlspecialchars($row['Category']) . "</td>";
+                echo "<td>" . htmlspecialchars($row['d_status']) . "</td>";
+                echo "<td>" . ($row['approval_timestamp'] ? date('Y-m-d H:i', strtotime($row['approval_timestamp'])) : 'N/A') . "</td>";
+                echo "<td>
+                    <form action='user_archive_documents.php' method='POST'>
+                        <input type='hidden' name='" . ($row['resolution_no'] ? 'resolution_no' : 'ordinance_no') . "' value='" . htmlspecialchars($docNumber) . "'>
+                        <button type='submit' name='restore' class='btn btn-success btn-sm'>Restore</button>
+                    </form>
+                  </td>";
+                echo "</tr>";
+            }
+        } else {
+            echo "<tr><td colspan='9' class='text-center'>No archived documents found.</td></tr>";
+        }
+        ?>
+    </tbody>
+</table>
                 </div>
             </div>
         </div>

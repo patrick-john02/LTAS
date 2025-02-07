@@ -9,7 +9,7 @@ include('./includes/sidebar.php');
 $statusFilter = isset($_GET['status_filter']) ? $_GET['status_filter'] : '';
 
 // Modify SQL query based on filter
-$sql = "SELECT doc_no, Title, Author, `Date Published`, Category, d_status, id, file_path, ordinance_no, approval_timestamp
+$sql = "SELECT doc_no, Title, Author, `date_published`, Category, d_status, id, file_path, ordinance_no, approval_timestamp
 FROM documents 
 WHERE (isArchive = 0 OR isArchive = 2) AND Category = 'Ordinance'";
 
@@ -208,7 +208,7 @@ date_default_timezone_set('Asia/Manila');
             <tbody>
                 <?php
 
-$sql .= " ORDER BY (d_status = 'Pending') DESC, `Date Published` DESC";
+$sql .= " ORDER BY (d_status = 'Pending') DESC, `date_published` DESC";
 
                 // Prepare and execute query
                 $stmt = $conn->prepare($sql);
@@ -233,7 +233,7 @@ $sql .= " ORDER BY (d_status = 'Pending') DESC, `Date Published` DESC";
                         echo "<td><a href='document_info.php?id=" . urlencode($row["id"]) . "'>" . htmlspecialchars($row["ordinance_no"]) . "</a></td>";
                         echo "<td>" . htmlspecialchars($row["Title"]) . "</td>";
                         echo "<td>" . htmlspecialchars($row["Author"]) . "</td>";
-                        echo "<td>" . date('Y-m-d', strtotime($row["Date Published"])) . "</td>";
+                        echo "<td>" . date('Y-m-d', strtotime($row["date_published"])) . "</td>";
                         echo "<td>" . htmlspecialchars($row["Category"]) . "</td>";
                         // If status is not 'Approved', display the approval timestamp
                         echo "<td>" . htmlspecialchars($row['d_status']) . "</td>";
@@ -439,7 +439,7 @@ $(function () {
     "responsive": true,
     "lengthChange": false,
     "autoWidth": false,
-    "order": [[4, 'desc']], // Sort by the 5th column (Date Published) in descending order by default
+    "order": [[4, 'desc']], // Sort by the 5th column (date_published) in descending order by default
     "columnDefs": [
       {
         "targets": [4], // Column index for 'Date Published'

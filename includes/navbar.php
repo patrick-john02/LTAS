@@ -1,3 +1,36 @@
+<?php
+// Include the config file to connect to the database
+include('config.php');
+
+// Check if the user is logged in
+if (!isset($_SESSION['username'])) {
+    header("Location: login.php"); 
+    exit();
+}
+
+// Get the username from session
+$username = $_SESSION['username'];
+
+// Query to get admin details by joining the admin table with the users table
+$query = "SELECT a.id, u.username, u.password, a.AccessLevel 
+          FROM admin a
+          JOIN users u ON a.user_id = u.ID
+          WHERE u.username = '$username'";
+
+// Execute the query
+$result = mysqli_query($conn, $query);
+
+// Check if a matching admin was found
+if (mysqli_num_rows($result) > 0) {
+    // Fetch the admin details
+    $admin = mysqli_fetch_assoc($result);
+} else {
+    // If no matching admin found, redirect to an error page
+    header("Location: error.php");
+    exit();
+}
+?>
+
 <!-- Navbar -->
 <nav class="main-header navbar navbar-expand navbar-white navbar-light">
   <!-- Left navbar links -->
@@ -47,28 +80,6 @@
         </button>
       </div>
       <div class="modal-body">
-        <?php
-        // checking the user is logged in
-        if (!isset($_SESSION['username'])) {
-            header("Location: login.php"); 
-            exit();
-        }
-
-        // getting the admin details in the database 
-        include('config.php'); 
-        $username = $_SESSION['username']; 
-        $query = "SELECT * FROM admin WHERE username = '$username'";
-        $result = mysqli_query($conn, $query);
-
-        if (mysqli_num_rows($result) > 0) {
-            // get the admin details
-            $admin = mysqli_fetch_assoc($result);
-        } else {
-            header("Location: error.php");
-            exit();
-        }
-        ?>
-
         <form method="POST" action="update_profile.php">
           <div class="form-group">
             <label for="username">Username</label>
@@ -94,13 +105,3 @@
     </div>
   </div>
 </div>
-
-
-<script>
-  $(document).ready(function(){
-    // matic opening of the modal function
-    $('[data-toggle="modal"]').click(function(){
-      $('#profileModal').modal('show');
-    });
-  });
-</script>

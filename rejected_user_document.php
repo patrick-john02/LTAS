@@ -14,26 +14,29 @@ $uid = $_SESSION['userid'];
 $startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '';
 $endDate = isset($_GET['end_date']) ? $_GET['end_date'] : '';
 
-// query para sa mga approved resolutions
-$sql = "SELECT * FROM documents WHERE user_id = ? AND Category = 'Resolution' AND d_status = 'Reject'";
+// Query to select all rejected resolutions
+$sql = "SELECT d.* 
+        FROM documents d
+        JOIN categories c ON d.category_id = c.id  -- Join with the categories table
+        WHERE d.user_id = ? 
+        AND c.name = 'Resolution'  -- Filter by category name ('Resolution')
+        AND d.d_status = 'Reject'";  // Filter by rejection status
 $params = [$uid];
 $types = "i";
 
-// Date filtering - use custom start_date and end_date if available
+// Date range filtering
 if (!empty($startDate) && !empty($endDate)) {
-    $startDate = date('Y-m-d', strtotime($startDate)) . ' 00:00:00'; // Set time to 00:00:00 for start date
-    $endDate = date('Y-m-d', strtotime($endDate)) . ' 23:59:59'; // Set time to 23:59:59 for end date
-    $sql .= " AND `approval_timestamp` BETWEEN ? AND ?";
+    $sql .= " AND d.approval_timestamp BETWEEN ? AND ?";  // Use correct column for date
     $params[] = $startDate;
     $params[] = $endDate;
     $types .= "ss"; // Add two string parameters (start and end date)
 }
 
-$sql .= " ORDER BY `approval_timestamp` DESC";
+$sql .= " ORDER BY d.approval_timestamp DESC";  // Sort by approval timestamp
 
-// Prepare and execute the SQL statement
 $stmt = $conn->prepare($sql);
 if ($stmt) {
+    // Bind parameters dynamically
     $stmt->bind_param($types, ...$params);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -41,6 +44,7 @@ if ($stmt) {
     die("SQL Error: " . $conn->error);
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">

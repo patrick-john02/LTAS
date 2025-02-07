@@ -81,7 +81,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['change_password'])) {
 
 ob_end_flush();
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -129,7 +128,7 @@ ob_end_flush();
                     <div class="card card-primary card-outline">
                         <div class="card-body box-profile">
                             <h3 class="profile-username text-center"><?php echo htmlspecialchars($user['FirstName']) . " " . htmlspecialchars($user['LastName']); ?></h3>
-                            <p class="text-muted text-center"><?php echo htmlspecialchars($user['position']); ?></p>
+                            <p class="text-muted text-center"><?php echo isset($user['position']) ? htmlspecialchars($user['position']) : 'N/A'; ?></p> <!-- Check for position -->
                             <ul class="list-group list-group-unbordered mb-3">
                                 <li class="list-group-item">
                                     <b>Username</b> <a class="float-right"><?php echo htmlspecialchars($user['Username']); ?></a>
@@ -141,13 +140,13 @@ ob_end_flush();
                                     <b>Last Name</b> <a class="float-right"><?php echo htmlspecialchars($user['LastName']); ?></a>
                                 </li>
                                 <li class="list-group-item">
-                                    <b>Email</b> <a class="float-right"><?php echo htmlspecialchars($user['email']); ?></a>
+                                    <b>Email</b> <a class="float-right"><?php echo isset($user['email']) ? htmlspecialchars($user['email']) : 'N/A'; ?></a> <!-- Check for email -->
                                 </li>
                                 <li class="list-group-item">
-                                    <b>Position</b> <a class="float-right"><?php echo htmlspecialchars($user['position']); ?></a>
+                                    <b>Position</b> <a class="float-right"><?php echo isset($user['position']) ? htmlspecialchars($user['position']) : 'N/A'; ?></a> <!-- Check for position -->
                                 </li>
                                 <li class="list-group-item">
-                                    <b>Department</b> <a class="float-right"><?php echo htmlspecialchars($user['dept']); ?></a>
+                                    <b>Department</b> <a class="float-right"><?php echo isset($user['dept']) ? htmlspecialchars($user['dept']) : 'N/A'; ?></a> <!-- Check for dept -->
                                 </li>
                                 <li class="list-group-item">
                                     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
@@ -159,45 +158,45 @@ ob_end_flush();
                     </div>
                 </div>
 
-                <!-- Edit Profile Form (Main Content Part) -->
-                <div class="col-md-9">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Edit Profile</h3>
-                        </div>
-                        <div class="card-body">
-                        <form action="user_profile.php" method="POST">
-    <div class="form-group mb-3">
-        <label for="username">Username</label>
-        <input type="text" class="form-control" id="username" name="username" value="<?php echo htmlspecialchars($user['Username']); ?>" maxlength="8" required>
-    </div>
-    <div class="form-group mb-3">
-        <label for="first_name">First Name</label>
-        <input type="text" class="form-control" id="first_name" name="first_name" value="<?php echo htmlspecialchars($user['FirstName']); ?>" maxlength="8" required>
-    </div>
-    <div class="form-group mb-3">
-        <label for="last_name">Last Name</label>
-        <input type="text" class="form-control" id="last_name" name="last_name" value="<?php echo htmlspecialchars($user['LastName']); ?>" maxlength="8" required>
-    </div>
-    <div class="form-group mb-3">
-        <label for="email">Email</label>
-        <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" maxlength="8" required>
-    </div>
-    <div class="form-group mb-3">
-        <label for="position">Position</label>
-        <input type="text" class="form-control" id="position" name="position" value="<?php echo htmlspecialchars($user['position']); ?>" maxlength="8" required>
-    </div>
-    <div class="form-group mb-3">
-        <label for="dept">Department</label>
-        <input type="text" class="form-control" id="dept" name="dept" value="<?php echo htmlspecialchars($user['dept']); ?>" maxlength="8" required>
-    </div>
-    <button type="submit" name="update_profile" class="btn btn-primary">Save Changes</button>
-</form>
-                        </div>
-                    </div>
-                </div>
-            </div>
+               <!-- Edit Profile Form (Main Content Part) -->
+<div class="col-md-9">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Edit Profile</h3>
         </div>
+        <div class="card-body">
+            <form action="user_profile.php" method="POST">
+                <div class="form-group mb-3">
+                    <label for="username">Username</label>
+                    <input type="text" class="form-control" id="username" name="username" value="<?php echo isset($user['Username']) ? htmlspecialchars($user['Username']) : ''; ?>" maxlength="8" required>
+                </div>
+                <div class="form-group mb-3">
+                    <label for="first_name">First Name</label>
+                    <input type="text" class="form-control" id="first_name" name="first_name" value="<?php echo isset($user['FirstName']) ? htmlspecialchars($user['FirstName']) : ''; ?>" maxlength="8" required>
+                </div>
+                <div class="form-group mb-3">
+                    <label for="last_name">Last Name</label>
+                    <input type="text" class="form-control" id="last_name" name="last_name" value="<?php echo isset($user['LastName']) ? htmlspecialchars($user['LastName']) : ''; ?>" maxlength="8" required>
+                </div>
+                <div class="form-group mb-3">
+                    <label for="email">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" value="<?php echo isset($user['email']) ? htmlspecialchars($user['email']) : ''; ?>" maxlength="8" required>
+                </div>
+                <div class="form-group mb-3">
+                    <label for="position">Position</label>
+                    <input type="text" class="form-control" id="position" name="position" value="<?php echo isset($user['position']) ? htmlspecialchars($user['position']) : ''; ?>" maxlength="8" required>
+                </div>
+                <div class="form-group mb-3">
+                    <label for="dept">Department</label>
+                    <input type="text" class="form-control" id="dept" name="dept" value="<?php echo isset($user['dept']) ? htmlspecialchars($user['dept']) : ''; ?>" maxlength="8" required>
+                </div>
+                <button type="submit" name="update_profile" class="btn btn-primary">Save Changes</button>
+            </form>
+        </div>
+    </div>
+</div>
+</div>
+</div>
 
         <!-- Modal for Change Password -->
         <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">

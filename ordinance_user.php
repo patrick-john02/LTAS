@@ -14,12 +14,15 @@ $uid = $_SESSION['userid'];
 $startDate = isset($_GET['start_date']) ? $_GET['start_date'] : '';
 $endDate = isset($_GET['end_date']) ? $_GET['end_date'] : '';
 
-// Query to fetch approved resolutions that are not archived
-$sql = "SELECT * FROM documents 
-        WHERE user_id = ? 
-        AND Category = 'Ordinance' 
-        AND d_status = 'Approve' 
-        AND isArchive = 0"; // Added condition to exclude archived rows
+
+$sql = "SELECT d.* 
+        FROM documents d
+        JOIN categories c ON d.category_id = c.id  
+        WHERE d.user_id = ? 
+        AND c.name = 'Ordinance'  
+        AND d.d_status = 'Approve' 
+        AND d.isArchive = 0"; 
+
 $params = [$uid];
 $types = "i";
 
